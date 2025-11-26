@@ -243,7 +243,7 @@ mod tests {
         fn inner_function() -> Ext4Result<i32> {
             Err(ENOMEM)
         }
-
+        
         fn outer_function() -> Ext4Result<i32> {
             inner_function()?;
             Ok(100)

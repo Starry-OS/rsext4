@@ -371,6 +371,17 @@ pub struct ext4_inode {
     pub version_hi: u32,
 }
 
+/// EXT4 extent 树头部
+#[repr(C, packed)]
+#[derive(Copy, Clone)]
+pub struct ext4_extent_header {
+    pub magic: u16,
+    pub entries_count: u16,
+    pub max_entries_count: u16,
+    pub depth: u16,
+    pub generation: u32,
+}
+
 /// 目录项类型
 #[repr(u8)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]

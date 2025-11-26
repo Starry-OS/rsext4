@@ -842,4 +842,277 @@ mod tests {
             EXT4_BLOCK_GROUP_ITABLE_ZEROED as u32
         ));
     }
+
+    // ============================================================================
+    // 跨平台字节序测试
+    // ============================================================================
+
+    #[test]
+    #[cfg(target_endian = "little")]
+    fn test_memory_layout_little_endian_u64() {
+        let (mut bg, sb) = create_test_bg_and_sb_64();
+
+        // 测试64位字段的内存布局
+        ext4_bg_set_block_bitmap(&mut bg, &sb, 0x12345678_9ABCDEF0);
+
+        // 在小端机器上验证字节顺序
+        let bytes_lo = unsafe {
+            core::slice::from_raw_parts(
+                core::ptr::addr_of!(bg.block_bitmap_lo) as *const u8,
+                4,
+            )
+        };
+        let bytes_hi = unsafe {
+            core::slice::from_raw_parts(
+                core::ptr::addr_of!(bg.block_bitmap_hi) as *const u8,
+                4,
+            )
+        };
+
+        // 小端序：低字节在前
+        assert_eq!(bytes_lo, &[0xF0, 0xDE, 0xBC, 0x9A]); // 低32位
+        assert_eq!(bytes_hi, &[0x78, 0x56, 0x34, 0x12]); // 高32位
+
+        // 验证读取正确
+        assert_eq!(ext4_bg_get_block_bitmap(&bg, &sb), 0x12345678_9ABCDEF0);
+    }
+
+    #[test]
+    #[cfg(target_endian = "little")]
+    fn test_memory_layout_little_endian_u32() {
+        let (mut bg, sb) = create_test_bg_and_sb_64();
+
+        // 测试32位字段（由u16 lo/hi组成）的内存布局
+        ext4_bg_set_free_blocks_count(&mut bg, &sb, 0x12345678);
+
+        // 验证lo部分（低16位）
+        let bytes_lo = unsafe {
+            core::slice::from_raw_parts(
+                core::ptr::addr_of!(bg.free_blocks_count_lo) as *const u8,
+                2,
+            )
+        };
+        assert_eq!(bytes_lo, &[0x78, 0x56]); // 小端序
+
+        // 验证hi部分（高16位）
+        let bytes_hi = unsafe {
+            core::slice::from_raw_parts(
+                core::ptr::addr_of!(bg.free_blocks_count_hi) as *const u8,
+                2,
+            )
+        };
+        assert_eq!(bytes_hi, &[0x34, 0x12]); // 小端序
+
+        // 验证读取正确
+        assert_eq!(ext4_bg_get_free_blocks_count(&bg, &sb), 0x12345678);
+    }
+
+    #[test]
+    #[cfg(target_endian = "little")]
+    fn test_memory_layout_little_endian_flags() {
+        let (mut bg, _sb) = create_test_bg_and_sb_64();
+
+        // 设置标志位
+        ext4_bg_set_flag(&mut bg, 0x0007); // 二进制 0000_0111
+
+        // 验证内存布局
+        let bytes =
+            unsafe { core::slice::from_raw_parts(core::ptr::addr_of!(bg.flags) as *const u8, 2) };
+        assert_eq!(bytes, &[0x07, 0x00]); // 小端序
+
+        // 验证标志检查正确
+        assert!(ext4_bg_has_flag(&bg, 0x0001));
+        assert!(ext4_bg_has_flag(&bg, 0x0002));
+        assert!(ext4_bg_has_flag(&bg, 0x0004));
+    }
+
+    #[test]
+    fn test_endianness_consistency_across_operations() {
+        let (mut bg, sb) = create_test_bg_and_sb_64();
+
+        // 写入多个不同类型的字段
+        ext4_bg_set_block_bitmap(&mut bg, &sb, 0xAABB_CCDD_EEFF_0011);
+        ext4_bg_set_inode_bitmap(&mut bg, &sb, 0x1122_3344_5566_7788);
+        ext4_bg_set_inode_table_first_block(&mut bg, &sb, 0xFEDC_BA98_7654_3210);
+        ext4_bg_set_free_blocks_count(&mut bg, &sb, 0x12345678);
+        ext4_bg_set_free_inodes_count(&mut bg, &sb, 0x9ABCDEF0);
+        ext4_bg_set_used_dirs_count(&mut bg, &sb, 0x11223344);
+        ext4_bg_set_itable_unused(&mut bg, &sb, 0x55667788);
+        ext4_bg_set_checksum(&mut bg, 0xABCD);
+        ext4_bg_set_flag(&mut bg, 0x0007);
+
+        // 验证所有字段独立且字节序正确
+        assert_eq!(
+            ext4_bg_get_block_bitmap(&bg, &sb),
+            0xAABB_CCDD_EEFF_0011
+        );
+        assert_eq!(
+            ext4_bg_get_inode_bitmap(&bg, &sb),
+            0x1122_3344_5566_7788
+        );
+        assert_eq!(
+            ext4_bg_get_inode_table_first_block(&bg, &sb),
+            0xFEDC_BA98_7654_3210
+        );
+        assert_eq!(ext4_bg_get_free_blocks_count(&bg, &sb), 0x12345678);
+        assert_eq!(ext4_bg_get_free_inodes_count(&bg, &sb), 0x9ABCDEF0);
+        assert_eq!(ext4_bg_get_used_dirs_count(&bg, &sb), 0x11223344);
+        assert_eq!(ext4_bg_get_itable_unused(&bg, &sb), 0x55667788);
+        assert_eq!(to_le16(bg.checksum), 0xABCD);
+        assert!(ext4_bg_has_flag(&bg, 0x0007));
+    }
+
+    #[test]
+    fn test_endianness_roundtrip_all_fields() {
+        let (mut bg, sb) = create_test_bg_and_sb_64();
+
+        // 测试值：使用不同的模式避免意外通过
+        let test_values_u64 = [
+            0x0000_0000_0000_0000,
+            0x0000_0000_FFFF_FFFF,
+            0xFFFF_FFFF_0000_0000,
+            0x0123_4567_89AB_CDEF,
+            0xFFFF_FFFF_FFFF_FFFF,
+        ];
+
+        let test_values_u32 = [0x0000_0000, 0x0000_FFFF, 0xFFFF_0000, 0x1234_5678, 0xFFFF_FFFF];
+
+        // 测试64位字段
+        for &val in &test_values_u64 {
+            ext4_bg_set_block_bitmap(&mut bg, &sb, val);
+            assert_eq!(ext4_bg_get_block_bitmap(&bg, &sb), val);
+
+            ext4_bg_set_inode_bitmap(&mut bg, &sb, val);
+            assert_eq!(ext4_bg_get_inode_bitmap(&bg, &sb), val);
+
+            ext4_bg_set_inode_table_first_block(&mut bg, &sb, val);
+            assert_eq!(ext4_bg_get_inode_table_first_block(&bg, &sb), val);
+        }
+
+        // 测试32位字段
+        for &val in &test_values_u32 {
+            ext4_bg_set_free_blocks_count(&mut bg, &sb, val);
+            assert_eq!(ext4_bg_get_free_blocks_count(&bg, &sb), val);
+
+            ext4_bg_set_free_inodes_count(&mut bg, &sb, val);
+            assert_eq!(ext4_bg_get_free_inodes_count(&bg, &sb), val);
+
+            ext4_bg_set_used_dirs_count(&mut bg, &sb, val);
+            assert_eq!(ext4_bg_get_used_dirs_count(&bg, &sb), val);
+
+            ext4_bg_set_itable_unused(&mut bg, &sb, val);
+            assert_eq!(ext4_bg_get_itable_unused(&bg, &sb), val);
+        }
+    }
+
+    #[test]
+    fn test_flags_endianness_all_operations() {
+        let (mut bg, _sb) = create_test_bg_and_sb_64();
+
+        // 测试各种标志组合
+        let flag_combinations = [
+            0x0001,
+            0x0002,
+            0x0004,
+            0x0003, // 0x0001 | 0x0002
+            0x0005, // 0x0001 | 0x0004
+            0x0006, // 0x0002 | 0x0004
+            0x0007, // 全部
+        ];
+
+        for &flags in &flag_combinations {
+            // 清空
+            bg.flags = 0;
+
+            // 设置标志
+            ext4_bg_set_flag(&mut bg, flags);
+
+            // 验证每个位
+            if flags & 0x0001 != 0 {
+                assert!(ext4_bg_has_flag(&bg, 0x0001));
+            }
+            if flags & 0x0002 != 0 {
+                assert!(ext4_bg_has_flag(&bg, 0x0002));
+            }
+            if flags & 0x0004 != 0 {
+                assert!(ext4_bg_has_flag(&bg, 0x0004));
+            }
+
+            // 验证内部值
+            assert_eq!(to_le16(bg.flags), flags as u16);
+
+            // 清除一个标志
+            ext4_bg_clear_flag(&mut bg, 0x0002);
+            assert!(!ext4_bg_has_flag(&bg, 0x0002));
+            assert_eq!(to_le16(bg.flags), (flags & !0x0002) as u16);
+        }
+    }
+
+    #[test]
+    fn test_endianness_32bit_vs_64bit_mode() {
+        // 确保32位和64位模式在相同值下行为一致
+        let (mut bg32, sb32) = create_test_bg_and_sb_32();
+        let (mut bg64, sb64) = create_test_bg_and_sb_64();
+
+        // 对于小于32位的值，两种模式应该完全一致
+        let test_value_small = 0x0000_0000_1234_5678_u64;
+        ext4_bg_set_block_bitmap(&mut bg32, &sb32, test_value_small);
+        ext4_bg_set_block_bitmap(&mut bg64, &sb64, test_value_small);
+
+        assert_eq!(
+            ext4_bg_get_block_bitmap(&bg32, &sb32),
+            test_value_small
+        );
+        assert_eq!(
+            ext4_bg_get_block_bitmap(&bg64, &sb64),
+            test_value_small
+        );
+
+        // 验证lo部分的内存布局相同
+        let lo32 = unsafe { core::ptr::read_unaligned(core::ptr::addr_of!(bg32.block_bitmap_lo)) };
+        let lo64 = unsafe { core::ptr::read_unaligned(core::ptr::addr_of!(bg64.block_bitmap_lo)) };
+        assert_eq!(lo32, lo64);
+
+        // 对于需要64位的值，只有64位模式能正确处理
+        let test_value_big = 0x9ABC_DEF0_1234_5678_u64;
+        ext4_bg_set_block_bitmap(&mut bg32, &sb32, test_value_big);
+        ext4_bg_set_block_bitmap(&mut bg64, &sb64, test_value_big);
+
+        // 32位模式会丢失高32位
+        assert_ne!(ext4_bg_get_block_bitmap(&bg32, &sb32), test_value_big);
+        assert_eq!(
+            ext4_bg_get_block_bitmap(&bg32, &sb32),
+            test_value_big & 0xFFFF_FFFF
+        );
+
+        // 64位模式保持完整
+        assert_eq!(
+            ext4_bg_get_block_bitmap(&bg64, &sb64),
+            test_value_big
+        );
+    }
+
+    #[test]
+    fn test_byte_order_independence() {
+        // 这个测试验证即使在不同字节序的系统上，
+        // 只要使用相同的 to_le* 函数，结果应该一致
+        let (mut bg, sb) = create_test_bg_and_sb_64();
+
+        // 写入一个值
+        let original = 0xDEAD_BEEF_CAFE_BABE_u64;
+        ext4_bg_set_block_bitmap(&mut bg, &sb, original);
+
+        // 模拟序列化到字节数组（就像写入磁盘）
+        let serialized_lo = bg.block_bitmap_lo.to_le_bytes();
+        let serialized_hi = bg.block_bitmap_hi.to_le_bytes();
+
+        // 创建新的结构，从字节数组反序列化
+        let mut bg2: ext4_bgroup = unsafe { core::mem::zeroed() };
+        bg2.block_bitmap_lo = u32::from_le_bytes(serialized_lo);
+        bg2.block_bitmap_hi = u32::from_le_bytes(serialized_hi);
+
+        // 读取应该得到相同的值
+        assert_eq!(ext4_bg_get_block_bitmap(&bg2, &sb), original);
+    }
 }
+

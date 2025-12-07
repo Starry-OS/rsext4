@@ -187,9 +187,9 @@ pub struct Ext4ExtentHeader {
 
 impl Ext4ExtentHeader {
     pub const EXT4_EXT_MAGIC: u16 = 0xF30A;
-    ///默认配置 4个条目 最大容量 深度 生成号
+    ///默认根节点配置 4个条目 最大容量 深度 生成号
     pub fn new()->Self{
-        Self { eh_magic: Self::EXT4_EXT_MAGIC, eh_entries: 4, eh_max: 4, eh_depth: 0, eh_generation: 0 }
+        Self { eh_magic: Self::EXT4_EXT_MAGIC, eh_entries: 0, eh_max: 4, eh_depth: 0, eh_generation: 0 }
     }
 }
 

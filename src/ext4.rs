@@ -7,8 +7,9 @@ use crate::datablock_cache::DataBlockCache;
 use crate::endian::DiskFormat;
 use crate::entries::Ext4DirEntry2;
 use crate::inodetable_cache::InodeCache;
-use crate::loopfile::get_file_inode_line;
-use crate::mkd::{create_lost_found_directory, create_root_directory_entry, mkd};
+use crate::loopfile::get_file_inode;
+use crate::mkd::{create_lost_found_directory, create_root_directory_entry, mkdir};
+use crate::mkfile::mkfile;
 use crate::superblock::Ext4Superblock;
 use crate::blockgroup_description::Ext4GroupDesc;
 use crate::bmalloc::{BlockAllocator, InodeAllocator};
@@ -80,7 +81,7 @@ pub struct Ext4FileSystem {
 impl Ext4FileSystem {
     //目录是否存在
      pub fn file_entries_exist<B: BlockDevice>(&mut self,device:&mut BlockDev<B>,path:&str)->bool{
-        let inode = get_file_inode_line(self, device, path).expect("no dir");
+        let inode = get_file_inode(self, device, path).expect("no dir");
         match &inode {
             Some(inode)=>{
                 debug!("Find it! Inode:{:?}",&inode);
@@ -94,15 +95,15 @@ impl Ext4FileSystem {
     }
 
     ///遍历目录
-    pub fn find_file_line<B: BlockDevice>(&mut self,device:&mut BlockDev<B>,path:&str)->Option<Ext4Inode>{
-        let inode = get_file_inode_line(self, device, path).expect("no dir");
+    pub fn find_file<B: BlockDevice>(&mut self,device:&mut BlockDev<B>,path:&str)->Option<Ext4Inode>{
+        let inode = get_file_inode(self, device, path).expect("no dir");
         match &inode {
             Some(inode)=>{
-                debug!("Found it! Inode:{:?}",&inode);
+                debug!("Found it: {} !",path);
                 Some(inode.clone())
             }
             None=>{
-                warn!("Not found!");
+                warn!("Not found: {} !",path);
                 None
             }
         }
@@ -233,16 +234,16 @@ impl Ext4FileSystem {
                 debug!("Lost+found inode recorded in superblock: {}", ino);
             } else {
                 warn!("s_lpf_ino is 0, lost+found not recorded in superblock");
-                create_lost_found_directory(&mut fs, block_dev);
             }
 
             // 2. 通过路径做一次校验（不会在失败时创建新目录）
-            match find_file_line(&mut fs, block_dev, "/lost+found") {
+            match find_file(&mut fs, block_dev, "/lost+found") {
                 Some(_inode) => {
                     info!("/lost+found exists (path resolution)");
                 }
                 None => {
-                    warn!("/lost+found not found by path scan; will not recreate during mount");
+                    info!("/lost+found not found by path scan;will create!");
+                    create_lost_found_directory(&mut fs, block_dev).ok();
                 }
             }
         }
@@ -304,7 +305,6 @@ impl Ext4FileSystem {
                 indoe_count, datablock_count
             );
         }
-        mkd(block_dev, &mut fs, "/lll/s");
 
         //debug
        // info!(" Ext4文件系统挂载成功！");
@@ -314,9 +314,6 @@ impl Ext4FileSystem {
         info!("  - free blocks: {}", fs.superblock.free_blocks_count());
         info!("  - total inodes: {}", fs.superblock.s_inodes_count);
         info!("  - free inodes: {}", fs.superblock.s_free_inodes_count);
-
-       
-
         //缓存刷新回磁盘
         fs.bitmap_cache.flush_all(block_dev).expect("flush failed!");
         fs.inodetable_cahce.flush_all(block_dev).expect("flush failed!");
@@ -332,11 +329,7 @@ impl Ext4FileSystem {
     ) -> Result<Vec<Ext4GroupDesc>, MountError> {
         let mut group_descs = Vec::new();
 
-        // GDT 的物理块布局按 ext4 标准：
-        // - 对于 1KB 块：Primary superblock 在块 1，GDT 在块 2 → GDT_OFFSET = 2 * BLOCK_SIZE
-        // - 对于 >1KB 块（如 4KB）：Primary superblock 在块 0 内部偏移 1024，
-        //   GDT 从块 1 开始 → GDT_OFFSET = 1 * BLOCK_SIZE
-        // 综合起来，GDT 基地址统一为块号 1 的起始字节偏移：
+       
         let gdt_base: u64 = BLOCK_SIZE as u64;
 
         // 为了减少重复读块，这里缓存当前块号
@@ -676,8 +669,8 @@ pub fn file_entry_exisr<B: BlockDevice>(fs:&mut Ext4FileSystem,device:&mut Block
     fs.file_entries_exist(device, path)
 }
 /// 文件寻找函数-线性扫描
-pub fn find_file_line<B: BlockDevice>(fs:&mut Ext4FileSystem,device:&mut BlockDev<B>,path:&str)->Option<Ext4Inode>{
-    fs.find_file_line(device, path)
+pub fn find_file<B: BlockDevice>(fs:&mut Ext4FileSystem,device:&mut BlockDev<B>,path:&str)->Option<Ext4Inode>{
+    fs.find_file(device, path)
 }
 
 /// 简化的挂载函数（用于兼容旧代码）
@@ -842,7 +835,7 @@ pub fn mkfs<B: BlockDevice>(block_dev: &mut BlockDev<B>) -> BlockDevResult<()> {
     debug!("  Blocks per group: {}", layout.blocks_per_group);
     debug!("  Inodes per group: {}", layout.inodes_per_group);
     
-    // 2. 构建并根据fearure写入到所有group超级块
+    //构建并根据fearure写入到所有group超级块
     let superblock = build_superblock(
         total_blocks,
         &layout,
@@ -855,7 +848,7 @@ pub fn mkfs<B: BlockDevice>(block_dev: &mut BlockDev<B>) -> BlockDevResult<()> {
 
     //注意顺序
     let mut descs:VecDeque<Ext4GroupDesc>=VecDeque::new();
-    // 3. 为superblock写入gdt（全部标记为UNINIT）
+    //为superblock写入gdt（全部标记为UNINIT）
     for group_id in 0..total_groups {
         let desc = build_uninit_group_desc(&superblock,group_id, &layout);
         write_group_desc(block_dev, group_id, &desc)?;
@@ -865,21 +858,22 @@ pub fn mkfs<B: BlockDevice>(block_dev: &mut BlockDev<B>) -> BlockDevResult<()> {
     write_gdt_redundant_backup(block_dev,  &descs, &superblock, total_groups, &layout)?;
     debug!("{} block group descriptors written", total_groups);
     
-    // 4. 实际初始化块组0（用于根目录）
+    //实际初始化块组0（用于根目录）
     initialize_group_0(block_dev, &layout)?;
     debug!("Block group 0 initialized (for root directory)");
     
-    // 4.5. 初始化其它块组的位图（全部视为空闲）
+    // 初始化其它块组的位图（全部视为空闲）
     initialize_other_groups_bitmaps(block_dev, &layout,&superblock)?;
 
-    // 5. 通过一次挂载/卸载流程，让根目录在 mkfs 阶段就被真正创建并写回磁盘
+    //通过一次挂载/卸载流程，让根目录在 mkfs 阶段就被真正创建并写回磁盘
     {
         let mut fs = Ext4FileSystem::mount(block_dev).expect("Mount Failed!");
         // mount 内部如果发现 root inode 未初始化，会调用 create_root_dir
         fs.umount(block_dev)?;
     }
 
-    // 6. 验证：读回超级块检查魔数
+
+    //  验证：读回超级块检查魔数
     let verify_sb = read_superblock(block_dev)?;
     if verify_sb.s_magic == EXT4_SUPER_MAGIC {
         debug!("Format completed, superblock magic verified: {:#x}", verify_sb.s_magic);
@@ -928,7 +922,7 @@ fn build_superblock(
     sb.s_r_blocks_count_lo = (layout.reserved_blocks & 0xFFFFFFFF) as u32;
     sb.s_r_blocks_count_hi = (layout.reserved_blocks >> 32) as u32;
 
-    //注意！:这里是不准确的，也不打算改这里，而是最终在umount时从每个desc计算同步
+
     // 空闲计数：总块数 - 组0元数据块数 - 预留块数（其余组初始全空闲）
     let metadata_blocks = layout.group0_metadata_blocks as u64;
     let mut free_blocks = total_blocks
@@ -938,7 +932,7 @@ fn build_superblock(
     sb.s_free_blocks_count_lo = (free_blocks & 0xFFFFFFFF) as u32;
     sb.s_free_blocks_count_hi = (free_blocks >> 32) as u32;
 
-    // 256B inode 的推荐 extra isize（与 ext4 通常值保持一致）
+  
     sb.s_min_extra_isize = 32;
     sb.s_want_extra_isize = 32;
 
@@ -1182,9 +1176,7 @@ fn initialize_group_0<B: BlockDevice>(
     let inode_bitmap_blk = layout.group0_inode_bitmap;
     let inode_table_blk = layout.group0_inode_table;
     
-    // 块组0布局：块0=引导, 块1=超级块, 块2..2+gdt=GDT, 然后是块位图、inode位图、inode表
     
-    // 1. 初始化块位图
     {
         let buffer = block_dev.buffer_mut();
         buffer.fill(0);
@@ -1198,7 +1190,6 @@ fn initialize_group_0<B: BlockDevice>(
     }
     block_dev.write_block(block_bitmap_blk)?;
     
-    // 2. 初始化inode位图
     {
         let buffer = block_dev.buffer_mut();
         buffer.fill(0);
@@ -1222,7 +1213,7 @@ fn initialize_group_0<B: BlockDevice>(
 
 
     
-    // 3. 清零inode表
+    //  清零inode表
     {
         let buffer = block_dev.buffer_mut();
         buffer.fill(0);
@@ -1231,7 +1222,7 @@ fn initialize_group_0<B: BlockDevice>(
         block_dev.write_block(inode_table_blk + i)?;
     }
     
-    // 4. 更新块组0的描述符（清除UNINIT标志）
+    //  更新块组0的描述符（清除UNINIT标志）
     let mut desc = Ext4GroupDesc::default();
     desc.bg_flags = Ext4GroupDesc::EXT4_BG_INODE_ZEROED;
     desc.bg_free_blocks_count_lo = layout.blocks_per_group
@@ -1271,7 +1262,7 @@ fn initialize_other_groups_bitmaps<B: BlockDevice>(
         let block_bitmap_blk = gl.group_blcok_bitmap_startblocks as u32;
         let inode_bitmap_blk = gl.group_inode_bitmap_startblocks as u32;
 
-        // 1. 初始化块位图：全0 → 所有块空闲
+        //  初始化块位图：全0 → 所有块空闲
         {
             let buffer = block_dev.buffer_mut();
             buffer.fill(0);
@@ -1286,11 +1277,11 @@ fn initialize_other_groups_bitmaps<B: BlockDevice>(
         block_dev.write_block(block_bitmap_blk)?;
 
         {
-            // 2. 初始化inode位图：全0 → 所有inode空闲
+            //  初始化inode位图：全0 → 所有inode空闲
             let buffer = block_dev.buffer_mut();
             buffer.fill(0);
 
-            // 2.5padding无效inode
+            // padding无效inode
             let bits_per_group =BLOCK_SIZE_U32*8;
             for i in layout.inodes_per_group..bits_per_group {
                 let byte_idx :usize= (i/8) as usize;

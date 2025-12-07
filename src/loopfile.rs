@@ -1,62 +1,50 @@
 //文件遍历
 
-use log::info;
+use alloc::vec::Vec;
+use log::{error, info};
 
 use crate::blockdev::{BlockDev, BlockDevice, BlockDevResult};
-use crate::config::{ BLOCK_SIZE};
+use crate::config::BLOCK_SIZE;
 use crate::disknode::Ext4Inode;
 use crate::entries::classic_dir;
 use crate::ext4::Ext4FileSystem;
 use crate::BlockDevError;
 use crate::endian::DiskFormat;
 use crate::disknode::{Ext4ExtentHeader, Ext4Extent};
+use crate::extents_tree::ExtentTree;
 
 ///暂未实现多级exend索引
 /// 根据 inode 的逻辑块号解析到物理块号，支持 12 个直接块和 1/2/3 级间接块
 pub fn resolve_inode_block<B: BlockDevice>(
     fs: &mut Ext4FileSystem,
     block_dev: &mut BlockDev<B>,
-    inode: &Ext4Inode,
+    inode: &mut Ext4Inode,
     logical_block: u32,
 ) -> BlockDevResult<Option<u32>> {
-    // 优先支持 extent 模式（仅叶子节点）
+    // 优先走 extent 树（支持多层索引）；失败时再回退到传统多级指针逻辑
     if inode.is_extent() {
-        // i_block 中的前 60 字节包含 extent header + 若干 extent 项
-        let mut raw: [u8; 60] = [0; 60];
-        for i in 0..15 {
-            let off = i * 4;
-            raw[off..off + 4].copy_from_slice(&inode.i_block[i].to_le_bytes());
-        }
-
-        let hdr = <Ext4ExtentHeader as DiskFormat>::from_disk_bytes(&raw[0..12]);
-        if hdr.eh_magic != Ext4ExtentHeader::EXT4_EXT_MAGIC {
-            return Err(BlockDevError::Corrupted);
-        }
-        if hdr.eh_depth != 0 {
-            // 暂不支持多层索引
-            return Ok(None);
-        }
-        let entries = core::cmp::min(hdr.eh_entries as usize, 4);
-        let end = 12 + entries * 12;
-        if end > raw.len() { return Err(BlockDevError::Corrupted); }
-
-        let lbn = logical_block;
-        for i in 0..entries {
-            let off = 12 + i * 12;
-            let ext = <Ext4Extent as DiskFormat>::from_disk_bytes(&raw[off..off + 12]);
-            let start_lbn = ext.ee_block;
+        let mut tree = ExtentTree::new(0, inode);
+        if let Some(ext) = tree.find_extent(block_dev, logical_block)? {
             let mut len = ext.ee_len as u32;
             // 最高位表示 uninitialized 标志，长度使用低 15 位
             if (len & 0x8000) != 0 { len &= 0x7FFF; }
-            if len == 0 { continue; }
-            if lbn >= start_lbn && lbn < start_lbn + len {
-                let phys_base = ((ext.ee_start_hi as u64) << 32) | ext.ee_start_lo as u64;
-                let phys = phys_base + (lbn - start_lbn) as u64;
-                if phys > u32::MAX as u64 { return Err(BlockDevError::Corrupted); }
-                return Ok(Some(phys as u32));
+            if len == 0 {
+                return Ok(None);
             }
+
+            let start_lbn = ext.ee_block;
+            if logical_block < start_lbn || logical_block >= start_lbn.saturating_add(len) {
+                return Ok(None);
+            }
+
+            let base = ((ext.ee_start_hi as u64) << 32) | ext.ee_start_lo as u64;
+            let phys = base + (logical_block - start_lbn) as u64;
+            if phys > u32::MAX as u64 {
+                return Err(BlockDevError::Corrupted);
+            }
+            return Ok(Some(phys as u32));
         }
-        return Ok(None);
+        error!("Can;t find proper extend for this logical block");
     }
 
     let lbn = logical_block as usize;
@@ -200,7 +188,7 @@ pub fn resolve_inode_block<B: BlockDevice>(
 }
 
 ///传入完整的路径信息线性扫描。
-pub fn get_file_inode_line<B: BlockDevice>(
+pub fn get_file_inode<B: BlockDevice>(
     fs: &mut Ext4FileSystem,
     block_dev: &mut BlockDev<B>,
     path: &str,
@@ -215,8 +203,10 @@ pub fn get_file_inode_line<B: BlockDevice>(
     let mut components = path.split('/')
         .filter(|s| !s.is_empty());
 
-    // 从根目录开始逐级解析
+    // 从根目录开始逐级解析，并维护一个路径栈以支持 ".." 回溯
     let mut current_inode = fs.get_root(block_dev)?;
+    let mut path_vec: Vec<Ext4Inode> = Vec::new();
+    path_vec.push(current_inode.clone());
 
     // 根目录所在的 inode 表起始块目前按 group0 处理
     let inode_table_start = match fs.group_descs.get(0) {
@@ -233,8 +223,16 @@ pub fn get_file_inode_line<B: BlockDevice>(
         if name == "." {
             continue;
         }
-        //..处理
-
+        if name == ".." {
+            // 回溯到父目录：栈中至少保留根目录一层
+            if path_vec.len() > 1 {
+                path_vec.pop();
+                if let Some(parent_inode) = path_vec.last() {
+                    current_inode = *parent_inode;
+                }
+            }
+            continue;
+        }
 
         let target = name.as_bytes();
 
@@ -251,7 +249,7 @@ pub fn get_file_inode_line<B: BlockDevice>(
         let mut found_inode_num: Option<u64> = None;
 
         for lbn in 0..total_blocks {
-            let phys = match resolve_inode_block(fs, block_dev, &current_inode, lbn as u32)? {
+            let phys = match resolve_inode_block(fs, block_dev, &mut current_inode, lbn as u32)? {
                 Some(b) => b,
                 None => continue,
             };
@@ -284,6 +282,7 @@ pub fn get_file_inode_line<B: BlockDevice>(
             .inodetable_cahce
             .get_or_load(block_dev, inode_num, block_num, offset)?;
         current_inode = cached_inode.inode;
+        path_vec.push(current_inode.clone());
     }
 
     Ok(Some(current_inode))

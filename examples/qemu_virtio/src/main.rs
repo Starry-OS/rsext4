@@ -10,7 +10,8 @@ mod console;
 mod lang_items;
 
 use core::arch::asm;
-use RVlwext4::{BlockDev, ext4::*};
+use RVlwext4::{BlockDev, ext4::*, mkd::mkdir, mkfile::{mkfile, read_file}};
+use alloc::string::String;
 use log::*;
 
 use crate::virtio_blk::VirtIOBlockWrapper;
@@ -22,8 +23,6 @@ pub extern "C" fn rust_main() -> ! {
     console::init();
     allocator::init_heap();
     
-    println!("\n=== RVlwext4 QEMU VirtIO 示例 ===");
-    println!("RISC-V 64 裸机环境\n");
     
     info!("初始化内存分配器...");
     info!("初始化 VirtIO 块设备...");
@@ -49,6 +48,8 @@ pub extern "C" fn rust_main() -> ! {
     let mut fs = test_mount();
     //测试文件查找-线性扫描
     test_find_file_line(&mut fs);
+    //test base io
+    test_base_io(&mut fs);
     //test umount
     test_unmount(fs);
     
@@ -57,11 +58,26 @@ pub extern "C" fn rust_main() -> ! {
     shutdown();
 }
 
+///文件夹创建，文件写入修改读测试
+fn test_base_io(fs:&mut Ext4FileSystem){
+    virtio_blk::with_block_device_mut(|device|{
+        let mut block_Dev = BlockDev::new(device);
+        mkdir(&mut block_Dev, fs, "/test_dir/");
+        let mut tmp_buffer :[u8;9000]= [b'R';9000];
+        let test_str = "Hello ext4 rust!".as_bytes();
+        tmp_buffer[8999]=b'L';
+        mkfile(&mut block_Dev, fs, "//test_dir/testfile", Some(&tmp_buffer));
+        mkfile(&mut block_Dev, fs, "//test_dir/testfile2", Some(&test_str));
+        let data=read_file(&mut block_Dev, fs, "//test_dir/testfile2").unwrap().unwrap();
+        let string = String::from_utf8(data).unwrap();
+        error!("read: {}",string);
+    })
+}
 ///文件查找测试
 fn test_find_file_line(fs:&mut Ext4FileSystem){
     virtio_blk::with_block_device_mut(|device|{
         let mut block_dev =BlockDev::new(device);
-       find_file_line(fs, &mut block_dev, "/.////../.");
+       find_file(fs, &mut block_dev, "/.////../.a");
     })
 }
 

@@ -71,19 +71,19 @@ impl VirtIOBlockWrapper {
                     continue; // 不是 VirtIO 设备，跳过
                 }
                 
-                log::debug!("发现 VirtIO 设备在 0x{:x}", addr);
+                //log::debug!("发现 VirtIO 设备在 0x{:x}", addr);
                 
                 // 读取设备 ID (偏移 0x08)
                 let device_id = ((addr + 0x08) as *const u32).read_volatile();
-                log::debug!("  设备ID: {}", device_id);
+                //log::debug!("  设备ID: {}", device_id);
                 
                 // 设备 ID 2 是块设备
                 if device_id != 2 {
-                    log::debug!("  不是块设备，跳过");
+                    //log::debug!("  不是块设备，跳过");
                     continue;
                 }
                 
-                log::info!("找到 VirtIO 块设备在 0x{:x}", addr);
+                //log::info!("找到 VirtIO 块设备在 0x{:x}", addr);
                 
                 let header = NonNull::new(addr as *mut VirtIOHeader)
                     .ok_or("VirtIO header is null")?;

@@ -22,6 +22,7 @@ mod extents_tree;
 mod hashtree;
 pub mod mkfile;
 pub mod api;
+mod jbd2;
 
 pub use crate::blockdev::*;
 pub use crate::config::*;

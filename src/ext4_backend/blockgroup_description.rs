@@ -1,11 +1,11 @@
 //! # 块组描述符模块
-//! 
+//!
 //! 定义了 ext4 文件系统的块组描述符结构和相关操作。
 
 use crate::ext4_backend::endian::*;
 
 /// Ext4 块组描述符结构
-/// 
+///
 /// 块组描述符包含了块组的元数据信息，如位图位置、inode表位置等
 /// 每个块组都有一个对应的块组描述符
 #[repr(C)]
@@ -425,7 +425,7 @@ mod tests {
 
     #[test]
     fn test_group_desc_64bit_values() {
-        let  desc = Ext4GroupDesc {
+        let desc = Ext4GroupDesc {
             bg_block_bitmap_lo: 0x12345678,
             bg_block_bitmap_hi: 0xABCDEF00,
             bg_inode_bitmap_lo: 0,
@@ -459,7 +459,7 @@ mod tests {
 
     #[test]
     fn test_group_desc_flags() {
-        let  desc = Ext4GroupDesc {
+        let desc = Ext4GroupDesc {
             bg_flags: Ext4GroupDesc::EXT4_BG_INODE_UNINIT,
             ..Default::default()
         };

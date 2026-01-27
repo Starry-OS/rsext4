@@ -227,10 +227,11 @@ impl DataBlockCache {
         block_num: u64,
     ) -> BlockDevResult<()> {
         if let Some(cached) = self.cache.remove(&block_num)
-            && cached.dirty {
-                // 写回磁盘
-                Self::write_block_static(block_dev, cached.block_num, &cached.data)?;
-            }
+            && cached.dirty
+        {
+            // 写回磁盘
+            Self::write_block_static(block_dev, cached.block_num, &cached.data)?;
+        }
         Ok(())
     }
 
@@ -295,14 +296,15 @@ impl DataBlockCache {
         block_num: u64,
     ) -> BlockDevResult<()> {
         if let Some(cached) = self.cache.get(&block_num)
-            && cached.dirty {
-                let data = cached.data.clone();
-                Self::write_block_static(block_dev, block_num, &data)?;
+            && cached.dirty
+        {
+            let data = cached.data.clone();
+            Self::write_block_static(block_dev, block_num, &data)?;
 
-                if let Some(cached) = self.cache.get_mut(&block_num) {
-                    cached.dirty = false;
-                }
+            if let Some(cached) = self.cache.get_mut(&block_num) {
+                cached.dirty = false;
             }
+        }
         Ok(())
     }
 

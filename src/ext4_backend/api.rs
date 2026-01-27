@@ -1,25 +1,25 @@
 //! # ext4 API
-//! 
+//!
 //! 提供 ext4 文件系统的高级 API 接口，包括文件系统挂载、文件操作等功能。
 
-use alloc::string::String;
-use alloc::vec::Vec;
+use crate::BLOCK_SIZE;
 use crate::ext4_backend::blockdev::*;
 use crate::ext4_backend::dir::*;
 use crate::ext4_backend::disknode::*;
+use crate::ext4_backend::error::*;
 use crate::ext4_backend::ext4::*;
 use crate::ext4_backend::file::*;
 use crate::ext4_backend::loopfile::*;
-use crate::ext4_backend::error::*;
 use crate::ext4_backend::*;
-use crate::BLOCK_SIZE;
+use alloc::string::String;
+use alloc::vec::Vec;
 
 /// 文件句柄
-/// 
+///
 /// 表示一个已打开的文件，包含文件的路径、inode 信息和当前读写位置
 pub struct OpenFile {
     /// inode 号
-    pub inode_num:u32,
+    pub inode_num: u32,
     /// 文件路径
     pub path: String,
     /// inode 数据
@@ -29,17 +29,17 @@ pub struct OpenFile {
 }
 
 /// 挂载 Ext4 文件系统
-/// 
+///
 /// # 参数
-/// 
+///
 /// * `dev` - 可变引用的块设备
-/// 
+///
 /// # 返回值
-/// 
+///
 /// 返回 `Ext4FileSystem` 实例或错误
-/// 
+///
 /// # 示例
-/// 
+///
 /// ```rust
 /// let mut fs = fs_mount(&mut device)?;
 /// # Ok::<(), Box<dyn std::error::Error>>(())
@@ -49,18 +49,18 @@ pub fn fs_mount<B: BlockDevice>(dev: &mut Jbd2Dev<B>) -> BlockDevResult<Ext4File
 }
 
 /// 卸载 Ext4 文件系统
-/// 
+///
 /// # 参数
-/// 
+///
 /// * `fs` - 文件系统实例
 /// * `dev` - 可变引用的块设备
-/// 
+///
 /// # 返回值
-/// 
+///
 /// 成功时返回 `Ok(())`，失败时返回错误
-/// 
+///
 /// # 示例
-/// 
+///
 /// ```rust
 /// fs_umount(fs, &mut device)?;
 /// # Ok::<(), Box<dyn std::error::Error>>(())
@@ -70,28 +70,25 @@ pub fn fs_umount<B: BlockDevice>(fs: Ext4FileSystem, dev: &mut Jbd2Dev<B>) -> Bl
 }
 
 /// 设置文件读写位置
-/// 
+///
 /// # 参数
-/// 
+///
 /// * `file` - 文件句柄
 /// * `location` - 新的读写位置
-/// 
+///
 /// # 返回值
-/// 
+///
 /// 成功时返回 `true`
-/// 
+///
 /// # 示例
-/// 
+///
 /// ```rust
 /// lseek(&mut file, 0);  // 移动到文件开头
 /// ```
-pub fn lseek(
-    file:&mut OpenFile,
-    location: u64
-)->bool{
-        file.offset = location;
-        true
-    }
+pub fn lseek(file: &mut OpenFile, location: u64) -> bool {
+    file.offset = location;
+    true
+}
 
 fn refresh_open_file_inode<B: BlockDevice>(
     dev: &mut Jbd2Dev<B>,
@@ -106,22 +103,22 @@ fn refresh_open_file_inode<B: BlockDevice>(
 }
 
 /// 打开文件
-/// 
+///
 /// 如果文件不存在且 `create` 为 `true`，则会自动创建文件
-/// 
+///
 /// # 参数
-/// 
+///
 /// * `dev` - 可变引用的块设备
 /// * `fs` - 可变引用的文件系统
 /// * `path` - 文件路径
 /// * `create` - 如果文件不存在是否创建
-/// 
+///
 /// # 返回值
-/// 
+///
 /// 返回 `OpenFile` 实例或错误
-/// 
+///
 /// # 示例
-/// 
+///
 /// ```rust
 /// let mut file = open(&mut device, &mut fs, "/test.txt", true)?;
 /// # Ok::<(), Box<dyn std::error::Error>>(())
@@ -148,36 +145,36 @@ pub fn open<B: BlockDevice>(
         return Err(BlockDevError::WriteError);
     }
 
-    let inode = match mkfile_with_ino(dev, fs, &norm_path, None,None) {
+    let inode = match mkfile_with_ino(dev, fs, &norm_path, None, None) {
         Some(ino) => ino,
         None => return Err(BlockDevError::WriteError),
     };
 
     Ok(OpenFile {
-        inode_num:inode.0,
+        inode_num: inode.0,
         path: norm_path,
-        inode:inode.1,
+        inode: inode.1,
         offset: 0,
     })
 }
 
 /// 写入文件内容
-/// 
+///
 /// 基于当前 offset 追加写入数据
-/// 
+///
 /// # 参数
-/// 
+///
 /// * `dev` - 可变引用的块设备
 /// * `fs` - 可变引用的文件系统
 /// * `file` - 可变引用的文件句柄
 /// * `data` - 要写入的数据
-/// 
+///
 /// # 返回值
-/// 
+///
 /// 成功时返回 `Ok(())`，失败时返回错误
-/// 
+///
 /// # 示例
-/// 
+///
 /// ```rust
 /// write_at(&mut device, &mut fs, &mut file, b"Hello, world!")?;
 /// # Ok::<(), Box<dyn std::error::Error>>(())
@@ -188,7 +185,6 @@ pub fn write_at<B: BlockDevice>(
     file: &mut OpenFile,
     data: &[u8],
 ) -> BlockDevResult<()> {
-
     if data.len() > usize::MAX {
         // 超出平台支持的大小
         return Err(BlockDevError::Unsupported);
@@ -206,19 +202,19 @@ pub fn write_at<B: BlockDevice>(
 }
 
 /// 读取整个文件内容
-/// 
+///
 /// # 参数
-/// 
+///
 /// * `dev` - 可变引用的块设备
 /// * `fs` - 可变引用的文件系统
 /// * `path` - 文件路径
-/// 
+///
 /// # 返回值
-/// 
+///
 /// 返回文件内容（可选）或错误
-/// 
+///
 /// # 示例
-/// 
+///
 /// ```rust
 /// let data = read(&mut device, &mut fs, "/test.txt")?;
 /// # Ok::<(), Box<dyn std::error::Error>>(())
@@ -232,22 +228,22 @@ pub fn read<B: BlockDevice>(
 }
 
 /// 从文件指定位置读取数据
-/// 
+///
 /// 基于当前文件 offset 读取指定长度的数据
-/// 
+///
 /// # 参数
-/// 
+///
 /// * `dev` - 可变引用的块设备
 /// * `fs` - 可变引用的文件系统
 /// * `file` - 可变引用的文件句柄
 /// * `len` - 要读取的数据长度
-/// 
+///
 /// # 返回值
-/// 
+///
 /// 返回读取的数据或错误
-/// 
+///
 /// # 示例
-/// 
+///
 /// ```rust
 /// let data = read_at(&mut device, &mut fs, &mut file, 1024)?;
 /// # Ok::<(), Box<dyn std::error::Error>>(())
@@ -303,10 +299,10 @@ pub fn read_at<B: BlockDevice>(
         if let Some(&phys) = extent_map.get(&(lbn as u32)) {
             let cached = fs.datablock_cache.get_or_load(dev, phys)?;
             let data = &cached.data[..block_bytes as usize];
-            out.extend_from_slice(&data[copy_start as usize ..(copy_start + copy_len) as usize]);
+            out.extend_from_slice(&data[copy_start as usize..(copy_start + copy_len) as usize]);
         } else {
             // Hole: return zeros for the requested logical range.
-            
+
             out.extend(core::iter::repeat_n(0u8, copy_len as usize));
         }
 

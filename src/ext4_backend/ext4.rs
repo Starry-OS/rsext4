@@ -12,26 +12,25 @@ use crate::ext4_backend::datablock_cache::*;
 use crate::ext4_backend::dir::*;
 use crate::ext4_backend::disknode::*;
 use crate::ext4_backend::endian::*;
+use crate::ext4_backend::error::*;
 use crate::ext4_backend::inodetable_cache::*;
 use crate::ext4_backend::jbd2::jbd2::*;
 use crate::ext4_backend::jbd2::jbdstruct::*;
 use crate::ext4_backend::loopfile::*;
 use crate::ext4_backend::superblock::*;
 use crate::ext4_backend::tool::*;
-use crate::ext4_backend::error::*;
 use log::trace;
 
 use alloc::collections::vec_deque::VecDeque;
 use alloc::vec::Vec;
 use log::{debug, error, info, warn};
 
-
 /// Ext4 文件系统实例
-/// 
+///
 /// 管理挂载后的文件系统状态，包含文件系统的所有核心数据结构
-/// 
+///
 /// # 字段
-/// 
+///
 /// * `superblock` - 文件系统超级块，包含文件系统元数据
 /// * `group_descs` - 块组描述符数组
 /// * `block_allocator` - 块分配器，管理数据块的分配和释放
@@ -70,14 +69,14 @@ pub struct Ext4FileSystem {
 
 impl Ext4FileSystem {
     /// 检查指定inode是否已经被分配
-    /// 
+    ///
     /// # 参数
-    /// 
+    ///
     /// * `device` - 可变引用的块设备
     /// * `inode_num` - 要检查的inode号
-    /// 
+    ///
     /// # 返回值
-    /// 
+    ///
     /// 如果inode已分配返回`true`，否则返回`false`
     pub fn inode_num_already_allocted<B: BlockDevice>(
         &mut self,
@@ -108,9 +107,7 @@ impl Ext4FileSystem {
         {
             Ok(b) => b,
             Err(e) => {
-                warn!(
-                    "inode_num_already_allocted: load inode bitmap failed: {e:?}"
-                );
+                warn!("inode_num_already_allocted: load inode bitmap failed: {e:?}");
                 return false;
             }
         };
@@ -119,9 +116,7 @@ impl Ext4FileSystem {
         match bm.is_allocated(inode_in_group) {
             Some(allocated) => allocated,
             None => {
-                warn!(
-                    "inode_num_already_allocted: inode_in_group {inode_in_group} out of range"
-                );
+                warn!("inode_num_already_allocted: inode_in_group {inode_in_group} out of range");
                 false
             }
         }
@@ -191,7 +186,6 @@ impl Ext4FileSystem {
         Ok(result.inode)
     }
 
-
     ///创建根目录
     ///文件系统初始化时调用
     fn create_root_dir<B: BlockDevice>(
@@ -225,7 +219,7 @@ impl Ext4FileSystem {
         // 3. 检查文件系统状态
         if superblock.s_state == Ext4Superblock::EXT4_ERROR_FS {
             warn!("Filesystem is in error state");
-          //  return Err(RSEXT4Error::FilesystemHasErrors);
+            //  return Err(RSEXT4Error::FilesystemHasErrors);
         }
 
         // 4. 计算块组数量
@@ -233,8 +227,7 @@ impl Ext4FileSystem {
         debug!("Block group count: {group_count}");
 
         // 5. 读取所有块组描述符
-        let group_descs =
-            Self::load_group_descriptors(block_dev, group_count)?;
+        let group_descs = Self::load_group_descriptors(block_dev, group_count)?;
         debug!("Loaded {} group descriptors", group_descs.len());
 
         // 6. 初始化分配器
@@ -344,7 +337,7 @@ impl Ext4FileSystem {
                     .expect("load journal inode failed");
 
                 // 解析 journal inode 第 0 号逻辑块 -> 物理块
-                let journal_first_block = resolve_inode_block( block_dev, &mut j_inode, 0)
+                let journal_first_block = resolve_inode_block(block_dev, &mut j_inode, 0)
                     .and_then(|opt| opt.ok_or(BlockDevError::Corrupted))
                     .expect("resolve journal first block failed");
 
@@ -459,9 +452,7 @@ impl Ext4FileSystem {
         let superblock = read_superblock(block_dev).map_err(|_| RSEXT4Error::IoError)?;
         let desc_size = superblock.get_desc_size() as usize;
 
-        debug!(
-            "Loading group descriptors: {group_count} groups, desc_size = {desc_size} bytes"
-        );
+        debug!("Loading group descriptors: {group_count} groups, desc_size = {desc_size} bytes");
         for group_id in 0..group_count {
             let byte_offset = gdt_base + group_id as u64 * desc_size as u64;
             let block_size_u64 = BLOCK_SIZE as u64;
@@ -516,7 +507,6 @@ impl Ext4FileSystem {
         self.datablock_cache.flush_all(block_dev)?;
         debug!("Data block cache flushed");
 
-
         // 4. Update superblock
         info!("Writing back superblock...");
         self.sync_superblock(block_dev)?;
@@ -528,7 +518,6 @@ impl Ext4FileSystem {
 
         //确保缓存已经提交完毕
         block_dev.umount_commit();
-       
 
         self.mounted = false;
         info!("Filesystem unmounted cleanly");
@@ -567,10 +556,11 @@ impl Ext4FileSystem {
             // 如果块号变化，先把前一个块写回
             if current_block != Some(block_num) {
                 if let Some(prev_block) = current_block
-                    && Some(prev_block) == buffer_snapshot_block {
-                        //由于目前日志回放在fs构建之后（块组描述符读取之后），目前为了快速修复防止读取到旧的超级块。直接落盘写回
-                        block_dev.write_block(prev_block as u32, false)?;
-                    }
+                    && Some(prev_block) == buffer_snapshot_block
+                {
+                    //由于目前日志回放在fs构建之后（块组描述符读取之后），目前为了快速修复防止读取到旧的超级块。直接落盘写回
+                    block_dev.write_block(prev_block as u32, false)?;
+                }
 
                 // 读取新块
                 block_dev.read_block(block_num as u32)?;
@@ -595,9 +585,10 @@ impl Ext4FileSystem {
 
         // 写回最后一个块
         if let Some(last_block) = current_block
-            && Some(last_block) == buffer_snapshot_block {
-                block_dev.write_block(last_block as u32, true)?;
-            }
+            && Some(last_block) == buffer_snapshot_block
+        {
+            block_dev.write_block(last_block as u32, true)?;
+        }
 
         debug!("Group descriptors written back");
         Ok(())
@@ -605,7 +596,10 @@ impl Ext4FileSystem {
 
     /// 同时修改所有需要冗余备份的块组
     /// 同步超级块到磁盘
-    pub fn sync_superblock<B: BlockDevice>(&mut self, block_dev: &mut Jbd2Dev<B>) -> BlockDevResult<()> {
+    pub fn sync_superblock<B: BlockDevice>(
+        &mut self,
+        block_dev: &mut Jbd2Dev<B>,
+    ) -> BlockDevResult<()> {
         //同步group_desc 和 super_block计数
         let mut real_free_blocks: u64 = 0;
         let mut real_free_inodes: u64 = 0;
@@ -698,18 +692,14 @@ impl Ext4FileSystem {
             return Ok(Vec::new());
         }
 
-        trace!(
-            "alloc_blocks: request count={count} (will scan groups for free space)"
-        );
+        trace!("alloc_blocks: request count={count} (will scan groups for free space)");
 
         // 选择一个有足够空闲块的块组，并在该组内做连续分配
         for (idx, desc) in self.group_descs.iter().enumerate() {
             let group_idx = idx as u32;
             let free = desc.free_blocks_count();
 
-            trace!(
-                "alloc_blocks: inspect group={group_idx} free_blocks={free} need={count}"
-            );
+            trace!("alloc_blocks: inspect group={group_idx} free_blocks={free} need={count}");
 
             if free < count {
                 continue;
@@ -770,9 +760,7 @@ impl Ext4FileSystem {
             return Ok(blocks);
         }
 
-        debug!(
-            "alloc_blocks: no group has enough free blocks for request count={count}"
-        );
+        debug!("alloc_blocks: no group has enough free blocks for request count={count}");
 
         Err(BlockDevError::NoSpace)
     }
@@ -1121,7 +1109,7 @@ pub struct BlcokGroupLayout {
     pub metadata_blocks_in_group: u32,
 }
 
-pub fn compute_fs_layout(inode_size:u16,total_blocks: u64) -> FsLayoutInfo {
+pub fn compute_fs_layout(inode_size: u16, total_blocks: u64) -> FsLayoutInfo {
     let block_size: u32 = 1024u32 << LOG_BLOCK_SIZE;
 
     // 每组块数：8 * block_size（标准 ext4 默认）
@@ -1131,15 +1119,15 @@ pub fn compute_fs_layout(inode_size:u16,total_blocks: u64) -> FsLayoutInfo {
     let inodes_per_group: u32 = blocks_per_group / 4;
 
     // 块组数：向上取整
-    let groups: u32 =
-        total_blocks.div_ceil(blocks_per_group as u64) as u32;
+    let groups: u32 = total_blocks.div_ceil(blocks_per_group as u64) as u32;
 
     // 确定块组描述符大小，默认使用64位描述符大小，除非明确指定使用32位
-    let desc_size: u16 = if DEFAULT_FEATURE_INCOMPAT & Ext4Superblock::EXT4_FEATURE_INCOMPAT_64BIT != 0 {
-        GROUP_DESC_SIZE
-    } else {
-        GROUP_DESC_SIZE_OLD
-    };
+    let desc_size: u16 =
+        if DEFAULT_FEATURE_INCOMPAT & Ext4Superblock::EXT4_FEATURE_INCOMPAT_64BIT != 0 {
+            GROUP_DESC_SIZE
+        } else {
+            GROUP_DESC_SIZE_OLD
+        };
 
     // 每块能容纳的组描述符个数
     let descs_per_block: u32 = if desc_size == 0 {
@@ -1209,7 +1197,7 @@ pub fn mkfs<B: BlockDevice>(block_dev: &mut Jbd2Dev<B>) -> BlockDevResult<()> {
 
     // 1. 计算布局参数
     let total_blocks = block_dev.total_blocks();
-    let layout = compute_fs_layout(DEFAULT_INODE_SIZE,total_blocks);
+    let layout = compute_fs_layout(DEFAULT_INODE_SIZE, total_blocks);
     let total_groups = layout.groups;
 
     debug!("  Total blocks: {total_blocks}");
@@ -1427,7 +1415,9 @@ fn write_superblock_redundant_backup<B: BlockDevice>(
             //需要超级块备份
             if need_redundant_backup(gid) {
                 let super_blocks = group_layout.group_start_block;
-                block_dev.read_block(super_blocks as u32).expect("Superblock read failed!");
+                block_dev
+                    .read_block(super_blocks as u32)
+                    .expect("Superblock read failed!");
                 let buffer = block_dev.buffer_mut();
                 sb.to_disk_bytes(&mut buffer[0..SUPERBLOCK_SIZE]);
                 block_dev.write_block(super_blocks as u32, true)?;
@@ -1525,8 +1515,7 @@ fn write_gdt_redundant_backup<B: BlockDevice>(
                     for _ in 0..fs_layout.descs_per_block {
                         if let Some(desc) = desc_iter.next() {
                             desc.to_disk_bytes(
-                                &mut buffer
-                                    [current_offset..current_offset + desc_size as usize],
+                                &mut buffer[current_offset..current_offset + desc_size as usize],
                             );
                             current_offset += desc_size as usize;
                         }
@@ -1550,7 +1539,7 @@ fn write_group_desc<B: BlockDevice>(
     // 读取超级块以确定块组描述符大小
     let superblock = read_superblock(block_dev)?;
     let desc_size = superblock.get_desc_size() as usize;
-    
+
     // GDT 基地址统一为块号 1 的起始字节偏移：按字节偏移计算所在块和块内偏移
     let gdt_base: u64 = BLOCK_SIZE as u64;
     let byte_offset = gdt_base + group_id as u64 * desc_size as u64;

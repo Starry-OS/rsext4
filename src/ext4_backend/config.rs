@@ -1,5 +1,5 @@
 //! # 配置常量定义
-//! 
+//!
 //! 定义了 ext4 文件系统实现中使用的各种配置常量，包括块大小、
 //! 块组参数、inode参数等。
 
@@ -15,7 +15,7 @@ pub const JBD2_BUFFER_MAX: usize = 10; //最多10条缓存
 // 块相关配置
 // ============================================================================
 /// Ext4 块大小（字节）
-pub const BLOCK_SIZE: usize = 4096;//usize没问题
+pub const BLOCK_SIZE: usize = 4096; //usize没问题
 pub const BLOCK_SIZE_U32: u32 = BLOCK_SIZE as u32;
 
 /// Ext4 块大小对数（log2）

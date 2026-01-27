@@ -1,13 +1,12 @@
 //! # 错误处理模块
-//! 
+//!
 //! 定义了 rsext4 库中使用的所有错误类型，提供清晰的错误信息以便调试和处理
 
 /// 块设备错误类型
-/// 
+///
 /// 定义了所有可能的块设备操作错误
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BlockDevError {
-
     /// 非法输入
     InvalidInput,
 
@@ -66,11 +65,12 @@ pub enum BlockDevError {
     Unknown,
 }
 
-
 impl core::fmt::Display for BlockDevError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
-            BlockDevError::InvalidInput =>{write!(f,"invalid input")}
+            BlockDevError::InvalidInput => {
+                write!(f, "invalid input")
+            }
             BlockDevError::ReadError => write!(f, "failed to read from block device"),
             BlockDevError::WriteError => write!(f, "failed to write to block device"),
             BlockDevError::BlockOutOfRange {
@@ -110,14 +110,12 @@ impl core::fmt::Display for BlockDevError {
     }
 }
 /// 块设备操作结果类型
-/// 
+///
 /// 用于块设备操作的错误处理
 pub type BlockDevResult<T> = Result<T, BlockDevError>;
 
-
-
 /// Ext4 文件系统错误
-/// 
+///
 /// 定义了所有可能的 ext4 文件系统操作错误
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RSEXT4Error {
@@ -149,6 +147,6 @@ impl core::fmt::Display for RSEXT4Error {
 }
 
 /// Ext4 文件系统操作结果类型
-/// 
+///
 /// 用于 ext4 文件系统操作的错误处理
 pub type Ext4Result<T> = Result<T, RSEXT4Error>;

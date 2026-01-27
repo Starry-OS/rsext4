@@ -1,5 +1,5 @@
 //! # 目录条目模块
-//! 
+//!
 //! 定义了 ext4 文件系统中目录条目的数据结构和操作。
 
 use crate::ext4_backend::config::*;
@@ -7,7 +7,7 @@ use crate::ext4_backend::endian::*;
 use alloc::vec::Vec;
 
 /// Ext4 目录条目结构（传统格式）
-/// 
+///
 /// 用于 ext3/ext4 的线性目录条目格式
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]

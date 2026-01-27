@@ -1,5 +1,5 @@
 //! # 文件遍历和操作模块
-//! 
+//!
 //! 提供文件内容读取、块解析等功能。
 
 use alloc::collections::BTreeMap;
@@ -10,10 +10,10 @@ use crate::ext4_backend::blockdev::*;
 use crate::ext4_backend::config::*;
 use crate::ext4_backend::disknode::*;
 use crate::ext4_backend::entries::*;
+use crate::ext4_backend::error::*;
 use crate::ext4_backend::ext4::*;
 use crate::ext4_backend::extents_tree::*;
 use crate::ext4_backend::hashtree::*;
-use crate::ext4_backend::error::*;
 use log::debug;
 
 ///支持extend数和多级索引(多级索引将来弃用)
@@ -50,12 +50,10 @@ pub fn resolve_inode_block<B: BlockDevice>(
         }
         error!("Can't find proper extend for this logical block");
         return Err(BlockDevError::ReadError);
-    }else {
+    } else {
         error!("Only Support Extend mode!");
         return Err(BlockDevError::Unsupported);
     }
-
-    
 }
 
 pub fn resolve_inode_block_allextend<B: BlockDevice>(
@@ -132,8 +130,6 @@ pub fn get_file_inode<B: BlockDevice>(
     block_dev: &mut Jbd2Dev<B>,
     path: &str,
 ) -> BlockDevResult<Option<(u32, Ext4Inode)>> {
-
-
     // 规范化路径：空串或"/" 视为根目录
     if path.is_empty() || path == "/" {
         let inode = fs.get_root(block_dev)?;
@@ -210,8 +206,6 @@ pub fn get_file_inode<B: BlockDevice>(
             }
         }
 
-   
-
         let inode_num = match found_inode_num {
             Some(n) => n,
             None => return Ok(None),
@@ -233,8 +227,6 @@ pub fn get_file_inode<B: BlockDevice>(
         current_ino_num = inode_num_u32;
         path_vec.push(current_inode);
     }
-
- 
 
     Ok(Some((current_ino_num, current_inode)))
 }

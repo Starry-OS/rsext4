@@ -2,16 +2,24 @@
 name = "rsext4"
 version = "0.1.0"
 edition = "2024"
+authors = ["Dirinkbottle <2909128143@qq.com>"]
+description = "A lightweight ext4 file system."
+repository = "https://github.com/Starry-OS/rsext4"
+readme = "README.md"
+license = "GPL-3.0-or-later OR Apache-2.0 OR MIT"
+keywords = ["ext4", "filesystem", "rust"]
+categories = ["filesystem"]
 
-[dependencies]
-bitflags = "2.10"
-lazy_static = { version = "1.5", features = ["spin_no_std"] }
-log = "0.4"
 [features]
-default = ["debug_printf", "debug_assert","CONFIG_META_CSUM_ENABLE"]
+default = ["debug_printf", "debug_assert", "CONFIG_META_CSUM_ENABLE"]
 std = []
 debug_printf = []
 debug_assert = []
 own_assert = []
 CONFIG_META_CSUM_ENABLE = []
 vfs-perf = []
+
+[dependencies]
+bitflags = "2.10"
+lazy_static = { version = "1.5", features = ["spin_no_std"] }
+log = "0.4"

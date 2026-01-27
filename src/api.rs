@@ -1,0 +1,270 @@
+//! # ext4 API
+//!
+//! 提供 ext4 文件系统的高级 API 接口，包括文件系统挂载、文件操作等功能。
+
+use crate::BLOCK_SIZE;
+use crate::blockdev::*;
+use crate::dir::*;
+use crate::disknode::*;
+use crate::error::*;
+use crate::ext4::*;
+use crate::file::*;
+use crate::loopfile::*;
+use crate::*;
+use alloc::string::String;
+use alloc::vec::Vec;
+
+/// 文件句柄
+///
+/// 表示一个已打开的文件，包含文件的路径、inode 信息和当前读写位置
+pub struct OpenFile {
+    /// inode 号
+    pub inode_num: u32,
+    /// 文件路径
+    pub path: String,
+    /// inode 数据
+    pub inode: Ext4Inode,
+    /// 当前读写偏移量
+    pub offset: u64,
+}
+
+/// 挂载 Ext4 文件系统
+///
+/// # 参数
+///
+/// * `dev` - 可变引用的块设备
+///
+/// # 返回值
+///
+/// 返回 `Ext4FileSystem` 实例或错误
+
+pub fn fs_mount<B: BlockDevice>(dev: &mut Jbd2Dev<B>) -> BlockDevResult<Ext4FileSystem> {
+    ext4::mount(dev)
+}
+
+/// 卸载 Ext4 文件系统
+///
+/// # 参数
+///
+/// * `fs` - 文件系统实例
+/// * `dev` - 可变引用的块设备
+///
+/// # 返回值
+///
+/// 成功时返回 `Ok(())`，失败时返回错误
+pub fn fs_umount<B: BlockDevice>(fs: Ext4FileSystem, dev: &mut Jbd2Dev<B>) -> BlockDevResult<()> {
+    ext4::umount(fs, dev)
+}
+
+/// 设置文件读写位置
+///
+/// # 参数
+///
+/// * `file` - 文件句柄
+/// * `location` - 新的读写位置
+///
+/// # 返回值
+///
+/// 成功时返回 `true`
+pub fn lseek(file: &mut OpenFile, location: u64) -> bool {
+    file.offset = location;
+    true
+}
+
+fn refresh_open_file_inode<B: BlockDevice>(
+    dev: &mut Jbd2Dev<B>,
+    fs: &mut Ext4FileSystem,
+    file: &mut OpenFile,
+) -> BlockDevResult<()> {
+    let Some((_ino, inode)) = get_file_inode(fs, dev, &file.path)? else {
+        return Err(BlockDevError::InvalidInput);
+    };
+    file.inode = inode;
+    Ok(())
+}
+
+/// 打开文件
+///
+/// 如果文件不存在且 `create` 为 `true`，则会自动创建文件
+///
+/// # 参数
+///
+/// * `dev` - 可变引用的块设备
+/// * `fs` - 可变引用的文件系统
+/// * `path` - 文件路径
+/// * `create` - 如果文件不存在是否创建
+///
+/// # 返回值
+///
+/// 返回 `OpenFile` 实例或错误
+pub fn open<B: BlockDevice>(
+    dev: &mut Jbd2Dev<B>,
+    fs: &mut Ext4FileSystem,
+    path: &str,
+    create: bool,
+) -> BlockDevResult<OpenFile> {
+    let norm_path = split_paren_child_and_tranlatevalid(path);
+
+    if let Ok(Some(inode)) = get_file_inode(fs, dev, &norm_path) {
+        let real_inode = inode.1;
+        return Ok(OpenFile {
+            inode_num: inode.0,
+            path: norm_path,
+            inode: real_inode,
+            offset: 0,
+        });
+    }
+
+    if !create {
+        return Err(BlockDevError::WriteError);
+    }
+
+    let inode = match mkfile_with_ino(dev, fs, &norm_path, None, None) {
+        Some(ino) => ino,
+        None => return Err(BlockDevError::WriteError),
+    };
+
+    Ok(OpenFile {
+        inode_num: inode.0,
+        path: norm_path,
+        inode: inode.1,
+        offset: 0,
+    })
+}
+
+/// 写入文件内容
+///
+/// 基于当前 offset 追加写入数据
+///
+/// # 参数
+///
+/// * `dev` - 可变引用的块设备
+/// * `fs` - 可变引用的文件系统
+/// * `file` - 可变引用的文件句柄
+/// * `data` - 要写入的数据
+///
+/// # 返回值
+///
+/// 成功时返回 `Ok(())`，失败时返回错误
+pub fn write_at<B: BlockDevice>(
+    dev: &mut Jbd2Dev<B>,
+    fs: &mut Ext4FileSystem,
+    file: &mut OpenFile,
+    data: &[u8],
+) -> BlockDevResult<()> {
+    if data.len() > usize::MAX {
+        // 超出平台支持的大小
+        return Err(BlockDevError::Unsupported);
+    }
+
+    if data.is_empty() {
+        return Ok(());
+    }
+
+    let off = file.offset;
+    write_file(dev, fs, &file.path, off, data)?;
+    file.offset = file.offset.saturating_add(data.len() as u64);
+    refresh_open_file_inode(dev, fs, file)?;
+    Ok(())
+}
+
+/// 读取整个文件内容
+///
+/// # 参数
+///
+/// * `dev` - 可变引用的块设备
+/// * `fs` - 可变引用的文件系统
+/// * `path` - 文件路径
+///
+/// # 返回值
+///
+/// 返回文件内容（可选）或错误
+pub fn read<B: BlockDevice>(
+    dev: &mut Jbd2Dev<B>,
+    fs: &mut Ext4FileSystem,
+    path: &str,
+) -> BlockDevResult<Option<Vec<u8>>> {
+    read_file(dev, fs, path)
+}
+
+/// 从文件指定位置读取数据
+///
+/// 基于当前文件 offset 读取指定长度的数据
+///
+/// # 参数
+///
+/// * `dev` - 可变引用的块设备
+/// * `fs` - 可变引用的文件系统
+/// * `file` - 可变引用的文件句柄
+/// * `len` - 要读取的数据长度
+///
+/// # 返回值
+///
+/// 返回读取的数据或错误
+pub fn read_at<B: BlockDevice>(
+    dev: &mut Jbd2Dev<B>,
+    fs: &mut Ext4FileSystem,
+    file: &mut OpenFile,
+    len: usize,
+) -> BlockDevResult<Vec<u8>> {
+    if len == 0 {
+        return Ok(Vec::new());
+    }
+
+    refresh_open_file_inode(dev, fs, file)?;
+
+    let file_size = file.inode.size() as u64;
+    if file.offset >= file_size {
+        return Ok(Vec::new());
+    }
+
+    let to_read = core::cmp::min(len, (file_size - file.offset) as usize);
+    let to_read = to_read as u64;
+    if to_read == 0 {
+        return Ok(Vec::new());
+    }
+
+    if !file.inode.have_extend_header_and_use_extend() {
+        return Err(BlockDevError::Unsupported);
+    }
+
+    let block_bytes = BLOCK_SIZE as u64;
+    let start_off = file.offset;
+    let end_off = start_off + to_read; // exclusive
+
+    let start_lbn = start_off / block_bytes;
+    let end_lbn = (end_off - 1) / block_bytes;
+
+    let extent_map = resolve_inode_block_allextend(fs, dev, &mut file.inode)?;
+
+    let mut out = Vec::with_capacity(to_read as usize);
+    for lbn in start_lbn..=end_lbn {
+        let lbn_start = lbn * block_bytes;
+        let lbn_end = lbn_start + block_bytes;
+
+        let copy_start = core::cmp::max(start_off, lbn_start) - lbn_start;
+        let copy_end = core::cmp::min(end_off, lbn_end) - lbn_start;
+        let copy_len = copy_end.saturating_sub(copy_start);
+        if copy_len == 0 {
+            continue;
+        }
+
+        if let Some(&phys) = extent_map.get(&(lbn as u32)) {
+            let cached = fs.datablock_cache.get_or_load(dev, phys)?;
+            let data = &cached.data[..block_bytes as usize];
+            out.extend_from_slice(&data[copy_start as usize..(copy_start + copy_len) as usize]);
+        } else {
+            // Hole: return zeros for the requested logical range.
+
+            out.extend(core::iter::repeat_n(0u8, copy_len as usize));
+        }
+
+        if out.len() as u64 >= to_read {
+            break;
+        }
+    }
+
+    out.truncate(to_read as usize);
+    file.offset = file.offset.saturating_add(out.len() as u64);
+    Ok(out)
+}

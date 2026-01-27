@@ -101,12 +101,18 @@ mod file_functional_tests {
 
         // 创建新文件
         let test_data = b"This is test data for file operations.";
-        mkfile(&mut jbd2_dev, &mut fs, "/testdir/testfile", Some(test_data), None)
-            .expect("mkfile failed");
+        mkfile(
+            &mut jbd2_dev,
+            &mut fs,
+            "/testdir/testfile",
+            Some(test_data),
+            None,
+        )
+        .expect("mkfile failed");
 
         // 读取文件内容
-        let read_data = read_file(&mut jbd2_dev, &mut fs, "/testdir/testfile")
-            .expect("read_file failed");
+        let read_data =
+            read_file(&mut jbd2_dev, &mut fs, "/testdir/testfile").expect("read_file failed");
         assert_eq!(read_data, Some(test_data.to_vec()));
 
         // 测试文件修改
@@ -115,9 +121,9 @@ mod file_functional_tests {
             .expect("write_file failed");
 
         // 验证修改后的内容
-        let modified_data = read_file(&mut jbd2_dev, &mut fs, "/testdir/testfile")
-            .expect("read_file failed");
-        
+        let modified_data =
+            read_file(&mut jbd2_dev, &mut fs, "/testdir/testfile").expect("read_file failed");
+
         // 注意：rsext4的write_file在写入比原文件小的数据时不会自动截断文件
         // 所以读取的内容会是新数据后跟着原文件的剩余部分
         if let Some(data) = &modified_data {
@@ -140,8 +146,14 @@ mod file_functional_tests {
 
         // 创建文件并写入数据
         let original_data = b"This is a long string that will be truncated";
-        mkfile(&mut jbd2_dev, &mut fs, "/truncatetest/truncate_file", Some(original_data), None)
-            .expect("mkfile failed");
+        mkfile(
+            &mut jbd2_dev,
+            &mut fs,
+            "/truncatetest/truncate_file",
+            Some(original_data),
+            None,
+        )
+        .expect("mkfile failed");
 
         // 截断文件
         truncate(&mut jbd2_dev, &mut fs, "/truncatetest/truncate_file", 10)
@@ -159,7 +171,7 @@ mod file_functional_tests {
         // 验证扩展后的内容
         let expanded_data = read_file(&mut jbd2_dev, &mut fs, "/truncatetest/truncate_file")
             .expect("read_file failed");
-        
+
         // 注意：rsext4的truncate在扩展时不会用零填充，而是保留原来在该位置的数据
         // 所以扩展后的内容应该是截断后的10字节 + 原始文件的接下来的10字节
         let mut expected = Vec::from(&original_data[..10]);
@@ -182,21 +194,32 @@ mod file_functional_tests {
 
         // 创建文件
         let test_data = b"Data for rename test";
-        mkfile(&mut jbd2_dev, &mut fs, "/renametest/oldname", Some(test_data), None)
-            .expect("mkfile failed");
+        mkfile(
+            &mut jbd2_dev,
+            &mut fs,
+            "/renametest/oldname",
+            Some(test_data),
+            None,
+        )
+        .expect("mkfile failed");
 
         // 重命名文件
-        rename(&mut jbd2_dev, &mut fs, "/renametest/oldname", "/renametest/newname")
-            .expect("rename failed");
+        rename(
+            &mut jbd2_dev,
+            &mut fs,
+            "/renametest/oldname",
+            "/renametest/newname",
+        )
+        .expect("rename failed");
 
         // 验证旧文件不存在
-        let old_data = read_file(&mut jbd2_dev, &mut fs, "/renametest/oldname")
-            .expect("read_file failed");
+        let old_data =
+            read_file(&mut jbd2_dev, &mut fs, "/renametest/oldname").expect("read_file failed");
         assert_eq!(old_data, None);
 
         // 验证新文件存在且内容正确
-        let new_data = read_file(&mut jbd2_dev, &mut fs, "/renametest/newname")
-            .expect("read_file failed");
+        let new_data =
+            read_file(&mut jbd2_dev, &mut fs, "/renametest/newname").expect("read_file failed");
         assert_eq!(new_data, Some(test_data.to_vec()));
 
         umount(fs, &mut jbd2_dev).expect("umount failed");
@@ -216,21 +239,32 @@ mod file_functional_tests {
 
         // 创建文件
         let test_data = b"Data for move test";
-        mkfile(&mut jbd2_dev, &mut fs, "/sourcedir/movefile", Some(test_data), None)
-            .expect("mkfile failed");
+        mkfile(
+            &mut jbd2_dev,
+            &mut fs,
+            "/sourcedir/movefile",
+            Some(test_data),
+            None,
+        )
+        .expect("mkfile failed");
 
         // 移动文件
-        mv(&mut fs, &mut jbd2_dev, "/sourcedir/movefile", "/destdir/movedfile")
-            .expect("mv failed");
+        mv(
+            &mut fs,
+            &mut jbd2_dev,
+            "/sourcedir/movefile",
+            "/destdir/movedfile",
+        )
+        .expect("mv failed");
 
         // 验证原位置文件不存在
-        let old_data = read_file(&mut jbd2_dev, &mut fs, "/sourcedir/movefile")
-            .expect("read_file failed");
+        let old_data =
+            read_file(&mut jbd2_dev, &mut fs, "/sourcedir/movefile").expect("read_file failed");
         assert_eq!(old_data, None);
 
         // 验证新位置文件存在且内容正确
-        let new_data = read_file(&mut jbd2_dev, &mut fs, "/destdir/movedfile")
-            .expect("read_file failed");
+        let new_data =
+            read_file(&mut jbd2_dev, &mut fs, "/destdir/movedfile").expect("read_file failed");
         assert_eq!(new_data, Some(test_data.to_vec()));
 
         umount(fs, &mut jbd2_dev).expect("umount failed");
@@ -249,20 +283,26 @@ mod file_functional_tests {
 
         // 创建文件
         let test_data = b"Data for delete test";
-        mkfile(&mut jbd2_dev, &mut fs, "/deletetest/deletefile", Some(test_data), None)
-            .expect("mkfile failed");
+        mkfile(
+            &mut jbd2_dev,
+            &mut fs,
+            "/deletetest/deletefile",
+            Some(test_data),
+            None,
+        )
+        .expect("mkfile failed");
 
         // 验证文件存在
-        let initial_data = read_file(&mut jbd2_dev, &mut fs, "/deletetest/deletefile")
-            .expect("read_file failed");
+        let initial_data =
+            read_file(&mut jbd2_dev, &mut fs, "/deletetest/deletefile").expect("read_file failed");
         assert_eq!(initial_data, Some(test_data.to_vec()));
 
         // 删除文件
         delete_file(&mut fs, &mut jbd2_dev, "/deletetest/deletefile");
 
         // 验证文件已被删除
-        let deleted_data = read_file(&mut jbd2_dev, &mut fs, "/deletetest/deletefile")
-            .expect("read_file failed");
+        let deleted_data =
+            read_file(&mut jbd2_dev, &mut fs, "/deletetest/deletefile").expect("read_file failed");
         assert_eq!(deleted_data, None);
 
         umount(fs, &mut jbd2_dev).expect("umount failed");
@@ -282,15 +322,26 @@ mod file_functional_tests {
 
         // 创建原始文件
         let test_data = b"Data for link test";
-        mkfile(&mut jbd2_dev, &mut fs, "/linktest/original", Some(test_data), None)
-            .expect("mkfile failed");
+        mkfile(
+            &mut jbd2_dev,
+            &mut fs,
+            "/linktest/original",
+            Some(test_data),
+            None,
+        )
+        .expect("mkfile failed");
 
         // 尝试创建硬链接
-        link(&mut fs, &mut jbd2_dev, "/linktest/original", "/linktest/hardlink");
+        link(
+            &mut fs,
+            &mut jbd2_dev,
+            "/linktest/original",
+            "/linktest/hardlink",
+        );
 
         // 验证原始文件仍然可以正常读取
-        let original_data = read_file(&mut jbd2_dev, &mut fs, "/linktest/original")
-            .expect("read_file failed");
+        let original_data =
+            read_file(&mut jbd2_dev, &mut fs, "/linktest/original").expect("read_file failed");
         assert_eq!(original_data, Some(test_data.to_vec()));
 
         // TODO: 硬链接功能需要进一步调试和修复
@@ -312,8 +363,14 @@ mod file_functional_tests {
 
         // 创建原始文件
         let test_data = b"Data for symbolic link test";
-        mkfile(&mut jbd2_dev, &mut fs, "/symlinktest/original", Some(test_data), None)
-            .expect("mkfile failed");
+        mkfile(
+            &mut jbd2_dev,
+            &mut fs,
+            "/symlinktest/original",
+            Some(test_data),
+            None,
+        )
+        .expect("mkfile failed");
 
         // 创建符号链接
         create_symbol_link(
@@ -325,8 +382,8 @@ mod file_functional_tests {
         .expect("create_symbol_link failed");
 
         // 通过符号链接读取文件
-        let link_data = read_file(&mut jbd2_dev, &mut fs, "/symlinktest/symlink")
-            .expect("read_file failed");
+        let link_data =
+            read_file(&mut jbd2_dev, &mut fs, "/symlinktest/symlink").expect("read_file failed");
         assert_eq!(link_data, Some(test_data.to_vec()));
 
         umount(fs, &mut jbd2_dev).expect("umount failed");
@@ -342,20 +399,26 @@ mod file_functional_tests {
         let mut fs = mount(&mut jbd2_dev).expect("mount failed");
 
         // 测试读取不存在的文件
-        let non_existent = read_file(&mut jbd2_dev, &mut fs, "/nonexistent/file")
-            .expect("read_file failed");
+        let non_existent =
+            read_file(&mut jbd2_dev, &mut fs, "/nonexistent/file").expect("read_file failed");
         assert_eq!(non_existent, None);
 
         // 测试在不存在的目录中创建文件（rsext4会自动创建父目录）
-        let result = mkfile(&mut jbd2_dev, &mut fs, "/nonexistent/file", Some(b"data"), None);
+        let result = mkfile(
+            &mut jbd2_dev,
+            &mut fs,
+            "/nonexistent/file",
+            Some(b"data"),
+            None,
+        );
         assert!(result.is_some(), "rsext4会自动创建父目录并成功创建文件");
 
         // 测试删除不存在的文件（不会报错，只是警告）
         delete_file(&mut fs, &mut jbd2_dev, "/nonexistent/file");
-        
+
         // 验证文件确实不存在
-        let non_existent = read_file(&mut jbd2_dev, &mut fs, "/nonexistent/file")
-            .expect("read_file failed");
+        let non_existent =
+            read_file(&mut jbd2_dev, &mut fs, "/nonexistent/file").expect("read_file failed");
         assert_eq!(non_existent, None);
 
         umount(fs, &mut jbd2_dev).expect("umount failed");

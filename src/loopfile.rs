@@ -49,10 +49,10 @@ pub fn resolve_inode_block<B: BlockDevice>(
             return Ok(Some(phys as u32));
         }
         error!("Can't find proper extend for this logical block");
-        return Err(BlockDevError::ReadError);
+        Err(BlockDevError::ReadError)
     } else {
         error!("Only Support Extend mode!");
-        return Err(BlockDevError::Unsupported);
+        Err(BlockDevError::Unsupported)
     }
 }
 

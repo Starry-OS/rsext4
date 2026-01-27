@@ -128,6 +128,11 @@ impl BlockBuffer {
         self.buffer.len()
     }
 
+    /// 检查缓冲区是否为空
+    pub fn is_empty(&self) -> bool {
+        self.buffer.is_empty()
+    }
+
     /// 清空缓冲区
     pub fn clear(&mut self) {
         self.buffer.fill(0);
@@ -328,9 +333,9 @@ impl<B: BlockDevice> Jbd2Dev<B> {
         let raw_dev = self.inner.device_mut();
 
         for i in 0..count {
-            let off = (i as usize) * (BLOCK_SIZE as usize);
+            let off = (i as usize) * BLOCK_SIZE;
             let mut boxbuf = Box::new([0; BLOCK_SIZE]);
-            boxbuf[..].copy_from_slice(&buf[off..off + (BLOCK_SIZE as usize)]);
+            boxbuf[..].copy_from_slice(&buf[off..off + BLOCK_SIZE]);
             let updates = Jbd2Update((block_id + i) as u64, boxbuf);
 
             //先写入缓存
@@ -349,11 +354,7 @@ impl<B: BlockDevice> Jbd2Dev<B> {
         Ok(())
     }
     pub fn cantflush(&mut self) -> BlockDevResult<()> {
-        if !self.journal_use {
-            return self.inner.flush();
-        } else {
-            return self.inner.flush();
-        }
+        self.inner.flush()
     }
 
     pub fn total_blocks(&self) -> u64 {

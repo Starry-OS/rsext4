@@ -67,7 +67,7 @@ impl DataBlockCache {
     }
 
     /// 创建默认配置的缓存（最多64个块，4KB大小）
-    pub fn default() -> Self {
+    pub fn create_default() -> Self {
         Self::new(64, BLOCK_SIZE)
     }
 

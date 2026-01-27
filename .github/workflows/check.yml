@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        targets: [x86_64-unknown-linux-gnu]
+        targets: [aarch64-unknown-none-softfloat, aarch64-unknown-none]
 
     steps:
       - name: Checkout code

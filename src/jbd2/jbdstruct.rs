@@ -159,8 +159,8 @@ impl DiskFormat for JournalSuperBllockS {
 
         let mut s_padding = [0u32; 42];
         let mut off = 84usize;
-        for i in 0..42 {
-            s_padding[i] = u32::from_be_bytes(bytes[off..off + 4].try_into().unwrap());
+        for elem in &mut s_padding {
+            *elem = u32::from_be_bytes(bytes[off..off + 4].try_into().unwrap());
             off += 4;
         }
 
@@ -547,8 +547,8 @@ impl DiskFormat for CommitHeader {
 
         let mut h_chksum = [0u32; 8];
         let mut off = 16usize;
-        for i in 0..8 {
-            h_chksum[i] = u32::from_be_bytes(bytes[off..off + 4].try_into().unwrap());
+        for elem in &mut h_chksum {
+            *elem = u32::from_be_bytes(bytes[off..off + 4].try_into().unwrap());
             off += 4;
         }
 

@@ -35,9 +35,10 @@ pub struct OpenFile {
 /// * `dev` - 可变引用的块设备
 ///
 /// # 返回值
-///
 /// 返回 `Ext4FileSystem` 实例或错误
-
+///
+/// # 参数
+/// - `dev`: 块设备
 pub fn fs_mount<B: BlockDevice>(dev: &mut Jbd2Dev<B>) -> BlockDevResult<Ext4FileSystem> {
     ext4::mount(dev)
 }
@@ -152,7 +153,8 @@ pub fn write_at<B: BlockDevice>(
     file: &mut OpenFile,
     data: &[u8],
 ) -> BlockDevResult<()> {
-    if data.len() > usize::MAX {
+    if false {
+        // data.len() <= usize::MAX always true
         // 超出平台支持的大小
         return Err(BlockDevError::Unsupported);
     }
@@ -213,7 +215,7 @@ pub fn read_at<B: BlockDevice>(
 
     refresh_open_file_inode(dev, fs, file)?;
 
-    let file_size = file.inode.size() as u64;
+    let file_size = file.inode.size();
     if file.offset >= file_size {
         return Ok(Vec::new());
     }

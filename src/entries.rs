@@ -271,12 +271,8 @@ pub mod classic_dir {
         target_name: &[u8],
     ) -> Option<Ext4DirEntryInfo<'a>> {
         let iter = DirEntryIterator::new(block_data);
-        for (entry, _) in iter {
-            if entry.name == target_name {
-                return Some(entry);
-            }
-        }
-        None
+        iter.map(|(entry, _)| entry)
+            .find(|entry| entry.name == target_name)
     }
 
     /// 列出目录中的所有条目

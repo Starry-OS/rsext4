@@ -193,8 +193,7 @@ pub fn insert_dir_entry<B: BlockDevice>(
             Some(&b) => b,
             None => {
                 error!(
-                    "insert_dir_entry: missing extent mapping for parent_ino={} lbn={} name={}",
-                    parent_ino_num, lbn, child_name
+                    "insert_dir_entry: missing extent mapping for parent_ino={parent_ino_num} lbn={lbn} name={child_name:?}"
                 );
                 return Err(BlockDevError::Corrupted);
             }
@@ -304,7 +303,7 @@ pub fn insert_dir_entry<B: BlockDevice>(
     parent_inode.i_size_high = ((new_size as u64) >> 32) as u32;
     //fix:extend元数据也会占block，不能仅仅靠现有blocks_count计算，需要考虑extent树的开销
     let cur = parent_inode.blocks_count();
-    let add_sectors = (BLOCK_SIZE as u64 / 512) as u64;
+    let add_sectors = BLOCK_SIZE as u64 / 512;
     let newv = cur.saturating_add(add_sectors);
     parent_inode.i_blocks_lo = (newv & 0xffff_ffff) as u32;
     parent_inode.l_i_blocks_high = ((newv >> 32) & 0xffff) as u16;
@@ -378,16 +377,13 @@ pub fn mkdir_with_ino<B: BlockDevice>(
     if norm_path.is_empty() || norm_path == "/" {
         debug!("Creating root directory");
         if let Err(e) = create_root_directory_entry(fs, device) {
-            error!(
-                "mkdir create_root_directory_entry failed path={} err={:?} ({})",
-                path, e, e
-            );
+            error!("mkdir create_root_directory_entry failed path={path} err={e:?} ({e})");
             return None;
         }
         return match fs.get_root(device) {
             Ok(inode) => Some((fs.root_inode, inode)),
             Err(e) => {
-                error!("mkdir get_root failed path={} err={:?} ({})", path, e, e);
+                error!("mkdir get_root failed path={path} err={e:?} ({e})");
                 None
             }
         };
@@ -400,10 +396,7 @@ pub fn mkdir_with_ino<B: BlockDevice>(
         return match fs.get_root(device) {
             Ok(inode) => Some((fs.root_inode, inode)),
             Err(e) => {
-                error!(
-                    "mkdir get_root failed(empty parts) path={} err={:?} ({})",
-                    path, e, e
-                );
+                error!("mkdir get_root failed(empty parts) path={path} err={e:?} ({e})");
                 None
             }
         };
@@ -412,23 +405,15 @@ pub fn mkdir_with_ino<B: BlockDevice>(
     // 从头逐一判断父路径是否存在，不存在则递归创建
     // 只针对中间父目录，最后一个组件留给当前 mkd 创建
     let mut cur_path = String::from("");
-    for i in 0..(parts.len().saturating_sub(1)) {
-        if cur_path.is_empty() {
-            cur_path.push('/');
-            cur_path.push_str(parts[i]);
-        } else {
-            cur_path.push('/');
-            cur_path.push_str(parts[i]);
-        }
+    for part in parts.iter().take(parts.len().saturating_sub(1)) {
+        cur_path.push('/');
+        cur_path.push_str(part);
 
-        if let Ok(None) = get_file_inode(fs, device, &cur_path) {
-            if mkdir(device, fs, &cur_path).is_none() {
-                error!(
-                    "mkdir recursive parent create failed path={} parent={}",
-                    path, cur_path
-                );
-                return None;
-            }
+        if let Ok(None) = get_file_inode(fs, device, &cur_path)
+            && mkdir(device, fs, &cur_path).is_none()
+        {
+            error!("mkdir recursive parent create failed path={path} parent={cur_path}");
+            return None;
         }
     }
 
@@ -438,9 +423,9 @@ pub fn mkdir_with_ino<B: BlockDevice>(
         "/".to_string()
     } else {
         let mut p = String::from("");
-        for i in 0..(parts.len() - 1) {
+        for part in parts.iter().take(parts.len() - 1) {
             p.push('/');
-            p.push_str(parts[i]);
+            p.push_str(part);
         }
         p
     };
@@ -450,10 +435,7 @@ pub fn mkdir_with_ino<B: BlockDevice>(
         match get_inode_with_num(fs, device, &parent).ok().flatten() {
             Some((n, ino)) => (n, ino),
             None => {
-                error!(
-                    "mkdir get parent inode failed path={} parent={} child={}",
-                    path, parent, child
-                );
+                error!("mkdir get parent inode failed path={path} parent={parent} child={child}");
                 return None;
             }
         };
@@ -462,16 +444,13 @@ pub fn mkdir_with_ino<B: BlockDevice>(
     if (parent.is_empty() || parent == "/") && child.is_empty() {
         debug!("Creating root directory");
         if let Err(e) = create_root_directory_entry(fs, device) {
-            error!(
-                "mkdir create_root_directory_entry failed path={} err={:?} ({})",
-                path, e, e
-            );
+            error!("mkdir create_root_directory_entry failed path={path} err={e:?} ({e})");
             return None;
         }
         return match fs.get_root(device) {
             Ok(inode) => Some((fs.root_inode, inode)),
             Err(e) => {
-                error!("mkdir get_root failed path={} err={:?} ({})", path, e, e);
+                error!("mkdir get_root failed path={path} err={e:?} ({e})");
                 None
             }
         };
@@ -481,16 +460,13 @@ pub fn mkdir_with_ino<B: BlockDevice>(
     if (parent.is_empty() || parent == "/") && child == "lost+found" {
         debug!("Creating /lost+found directory");
         if let Err(e) = create_lost_found_directory(fs, device) {
-            error!(
-                "mkdir create_lost_found_directory failed path={} err={:?} ({})",
-                path, e, e
-            );
+            error!("mkdir create_lost_found_directory failed path={path} err={e:?} ({e})");
             return None;
         }
         return match get_inode_with_num(fs, device, "/lost+found").ok().flatten() {
             Some((ino, inode)) => Some((ino, inode)),
             None => {
-                error!("mkdir post-create lost+found lookup failed path={}", path);
+                error!("mkdir post-create lost+found lookup failed path={path}");
                 None
             }
         };
@@ -501,8 +477,7 @@ pub fn mkdir_with_ino<B: BlockDevice>(
         Ok(ino) => ino,
         Err(e) => {
             error!(
-                "mkdir alloc_inode failed path={} parent={} child={} err={:?} ({})",
-                path, parent, child, e, e
+                "mkdir alloc_inode failed path={path} parent={parent} child={child} err={e:?} ({e})"
             );
             return None;
         }
@@ -512,10 +487,7 @@ pub fn mkdir_with_ino<B: BlockDevice>(
     let data_block = match fs.alloc_block(device) {
         Ok(b) => b,
         Err(e) => {
-            error!(
-                "mkdir alloc_block failed path={} ino={} err={:?} ({})",
-                path, new_dir_ino, e, e
-            );
+            error!("mkdir alloc_block failed path={path} ino={new_dir_ino} err={e:?} ({e})");
             return None;
         }
     };
@@ -581,10 +553,7 @@ pub fn mkdir_with_ino<B: BlockDevice>(
         })
         .is_err()
     {
-        error!(
-            "mkdir modify_inode failed path={} ino={}",
-            path, new_dir_ino
-        );
+        error!("mkdir modify_inode failed path={path} ino={new_dir_ino}");
         return None;
     }
 
@@ -595,8 +564,7 @@ pub fn mkdir_with_ino<B: BlockDevice>(
             Some(desc) => desc.inode_table(),
             None => {
                 error!(
-                    "mkdir parent group desc missing path={} parent_ino={} group={}",
-                    path, parent_ino_num, p_group
+                    "mkdir parent group desc missing path={path} parent_ino={parent_ino_num} group={p_group}"
                 );
                 return None;
             }
@@ -639,8 +607,7 @@ pub fn mkdir_with_ino<B: BlockDevice>(
     .is_err()
     {
         error!(
-            "mkdir insert_dir_entry failed path={} parent_ino={} child={} ino={}",
-            path, parent_ino_num, child, new_dir_ino
+            "mkdir insert_dir_entry failed path={path} parent_ino={parent_ino_num} child={child} ino={new_dir_ino}"
         );
         return None;
     }
@@ -648,10 +615,7 @@ pub fn mkdir_with_ino<B: BlockDevice>(
     match fs.get_inode_by_num(device, new_dir_ino) {
         Ok(inode) => Some((new_dir_ino, inode)),
         Err(e) => {
-            error!(
-                "mkdir get_inode_by_num failed path={} ino={} err={:?} ({})",
-                path, new_dir_ino, e, e
-            );
+            error!("mkdir get_inode_by_num failed path={path} ino={new_dir_ino} err={e:?} ({e})");
             None
         }
     }

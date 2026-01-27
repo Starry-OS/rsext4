@@ -2,9 +2,9 @@
 //!
 //! 测试文件系统的目录操作功能，包括创建、删除等
 
+use rsext4::disknode::Ext4Inode;
 use rsext4::error::{BlockDevError, BlockDevResult};
 use rsext4::*;
-use rsext4::disknode::Ext4Inode;
 
 // 包装 mkdir 函数，将 Option 转换为 Result 以便于测试
 fn test_mkdir<B: BlockDevice>(
@@ -122,8 +122,14 @@ mod directory_functional_tests {
 
         // 在子目录中创建文件
         let test_data = b"File in subdirectory";
-        mkfile(&mut jbd2_dev, &mut fs, "/test/subdir/file", Some(test_data), None)
-            .expect("mkfile failed");
+        mkfile(
+            &mut jbd2_dev,
+            &mut fs,
+            "/test/subdir/file",
+            Some(test_data),
+            None,
+        )
+        .expect("mkfile failed");
 
         // 删除空目录（应该成功）
         test_mkdir(&mut jbd2_dev, &mut fs, "/empty").expect("mkdir failed");
@@ -214,14 +220,14 @@ mod directory_functional_tests {
             let filename = format!("/findtest/file{}.txt", i);
             let expected_data = format!("Content of file {}", i);
 
-            let found_data = read_file(&mut jbd2_dev, &mut fs, &filename)
-                .expect("read_file failed");
+            let found_data =
+                read_file(&mut jbd2_dev, &mut fs, &filename).expect("read_file failed");
             assert_eq!(found_data, Some(expected_data.as_bytes().to_vec()));
         }
 
         // 测试查找不存在的文件
-        let not_found = read_file(&mut jbd2_dev, &mut fs, "/findtest/notexist.txt")
-            .expect("read_file failed");
+        let not_found =
+            read_file(&mut jbd2_dev, &mut fs, "/findtest/notexist.txt").expect("read_file failed");
         assert_eq!(not_found, None);
 
         umount(fs, &mut jbd2_dev).expect("umount failed");
@@ -262,7 +268,7 @@ mod directory_functional_tests {
 
         // 这个操作可能会失败，取决于实现
         delete_dir(&mut fs, &mut jbd2_dev, "/nonempty");
-        
+
         // 验证目录是否还存在
         let result = mkfile(
             &mut jbd2_dev,
@@ -320,8 +326,14 @@ mod directory_functional_tests {
 
         // 在不同目录中创建文件
         let files = [
-            ("/home/user/documents/work/report.txt", "Work report content"),
-            ("/home/user/documents/personal/diary.txt", "Personal diary entries"),
+            (
+                "/home/user/documents/work/report.txt",
+                "Work report content",
+            ),
+            (
+                "/home/user/documents/personal/diary.txt",
+                "Personal diary entries",
+            ),
             ("/home/user/music/rock/song1.mp3", "Rock music data"),
             ("/var/log/system.log", "System log entries"),
             ("/var/www/html/index.html", "HTML page content"),
@@ -331,20 +343,13 @@ mod directory_functional_tests {
         ];
 
         for (path, content) in &files {
-            mkfile(
-                &mut jbd2_dev,
-                &mut fs,
-                path,
-                Some(content.as_bytes()),
-                None,
-            )
-            .expect("mkfile failed");
+            mkfile(&mut jbd2_dev, &mut fs, path, Some(content.as_bytes()), None)
+                .expect("mkfile failed");
         }
 
         // 验证所有文件都能正确读取
         for (path, content) in &files {
-            let read_data = read_file(&mut jbd2_dev, &mut fs, path)
-                .expect("read_file failed");
+            let read_data = read_file(&mut jbd2_dev, &mut fs, path).expect("read_file failed");
             assert_eq!(read_data, Some(content.as_bytes().to_vec()));
         }
 

@@ -173,8 +173,8 @@ mod error_handling_tests {
         .expect("mkfile failed");
 
         // 测试正常读取
-        let data = read_file(&mut jbd2_dev, &mut fs, "/error_test/test.txt")
-            .expect("read_file failed");
+        let data =
+            read_file(&mut jbd2_dev, &mut fs, "/error_test/test.txt").expect("read_file failed");
         assert_eq!(data, Some(test_data.to_vec()));
 
         let _ = umount(fs, &mut jbd2_dev);
@@ -203,8 +203,7 @@ mod error_handling_tests {
         mkdir(&mut jbd2_dev, &mut fs, "/boundary").expect("mkdir failed");
 
         // 测试创建空文件
-        mkfile(&mut jbd2_dev, &mut fs, "/boundary/empty.txt", None, None)
-            .expect("mkfile failed");
+        mkfile(&mut jbd2_dev, &mut fs, "/boundary/empty.txt", None, None).expect("mkfile failed");
 
         // 测试文件名长度边界
         let long_name = "a".repeat(rsext4::DIRNAME_LEN);
@@ -287,8 +286,14 @@ mod error_handling_tests {
 
         // 测试同时删除和操作同一个文件
         let file_path = "/concurrent/delete_test.txt";
-        mkfile(&mut jbd2_dev, &mut fs, file_path, Some(b"to be deleted"), None)
-            .expect("mkfile failed");
+        mkfile(
+            &mut jbd2_dev,
+            &mut fs,
+            file_path,
+            Some(b"to be deleted"),
+            None,
+        )
+        .expect("mkfile failed");
 
         // 删除文件
         delete_file(&mut fs, &mut jbd2_dev, file_path);
@@ -298,11 +303,16 @@ mod error_handling_tests {
         assert_eq!(result, Ok(None));
 
         // 测试创建同名文件（应该成功）
-        mkfile(&mut jbd2_dev, &mut fs, file_path, Some(b"new content"), None)
-            .expect("mkfile failed");
+        mkfile(
+            &mut jbd2_dev,
+            &mut fs,
+            file_path,
+            Some(b"new content"),
+            None,
+        )
+        .expect("mkfile failed");
 
-        let data = read_file(&mut jbd2_dev, &mut fs, file_path)
-            .expect("read_file failed");
+        let data = read_file(&mut jbd2_dev, &mut fs, file_path).expect("read_file failed");
         assert_eq!(data, Some(b"new content".to_vec()));
 
         umount(fs, &mut jbd2_dev).expect("umount failed");
@@ -326,13 +336,7 @@ mod error_handling_tests {
 
         loop {
             let filename = format!("/exhaustion/file{}.dat", file_count);
-            let result = mkfile(
-                &mut jbd2_dev,
-                &mut fs,
-                &filename,
-                Some(&large_data),
-                None,
-            );
+            let result = mkfile(&mut jbd2_dev, &mut fs, &filename, Some(&large_data), None);
 
             match result {
                 Some(_) => file_count += 1,
@@ -350,8 +354,7 @@ mod error_handling_tests {
 
         // 验证最后创建的文件
         let last_filename = format!("/exhaustion/file{}.dat", file_count - 1);
-        let data = read_file(&mut jbd2_dev, &mut fs, &last_filename)
-            .expect("read_file failed");
+        let data = read_file(&mut jbd2_dev, &mut fs, &last_filename).expect("read_file failed");
         assert_eq!(data, Some(large_data));
 
         // 在资源耗尽的情况下，umount 可能失败，这是可以接受的
@@ -380,12 +383,11 @@ mod error_handling_tests {
         .expect("mkfile failed");
 
         // 打开文件但不关闭（模拟异常情况）
-        let mut file = open(&mut jbd2_dev, &mut fs, "/state_test/consistent.txt", true)
-            .expect("open failed");
+        let mut file =
+            open(&mut jbd2_dev, &mut fs, "/state_test/consistent.txt", true).expect("open failed");
 
         // 写入部分数据
-        write_at(&mut jbd2_dev, &mut fs, &mut file, b"partial")
-            .expect("write_at failed");
+        write_at(&mut jbd2_dev, &mut fs, &mut file, b"partial").expect("write_at failed");
 
         // 模拟异常关闭（不调用 umount）
         drop(file);
@@ -397,7 +399,7 @@ mod error_handling_tests {
         // 验证文件状态
         let data = read_file(&mut jbd2_dev, &mut fs, "/state_test/consistent.txt")
             .expect("read_file failed");
-        
+
         // 文件可能不存在，因为文件系统可能没有正确同步数据
         // 这取决于rsext4的实现如何处理异常关闭
         println!("File data after remount: {:?}", data);
@@ -431,8 +433,8 @@ mod error_handling_tests {
         // 这里主要测试基本操作不会因为权限问题而失败
 
         // 尝试读取文件（应该成功）
-        let data = read_file(&mut jbd2_dev, &mut fs, "/permission/test.txt")
-            .expect("read_file failed");
+        let data =
+            read_file(&mut jbd2_dev, &mut fs, "/permission/test.txt").expect("read_file failed");
         assert_eq!(data, Some(b"permission test".to_vec()));
 
         // 尝试修改文件（应该成功）
@@ -446,13 +448,17 @@ mod error_handling_tests {
         .expect("write_file failed");
 
         // 验证修改成功
-        let data = read_file(&mut jbd2_dev, &mut fs, "/permission/test.txt")
-            .expect("read_file failed");
-        
+        let data =
+            read_file(&mut jbd2_dev, &mut fs, "/permission/test.txt").expect("read_file failed");
+
         // 注意：rsext4的write_file在不截断文件时，可能保留原文件的部分内容
         // 所以我们检查新数据是否已正确写入到文件开头
         if let Some(file_data) = &data {
-            assert_eq!(&file_data[..b"modified".len()], b"modified", "新数据应该被正确写入到文件开头");
+            assert_eq!(
+                &file_data[..b"modified".len()],
+                b"modified",
+                "新数据应该被正确写入到文件开头"
+            );
         }
 
         umount(fs, &mut jbd2_dev).expect("umount failed");

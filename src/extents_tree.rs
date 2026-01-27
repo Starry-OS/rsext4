@@ -4,12 +4,12 @@
 
 use log::{debug, error};
 
-use crate::ext4_backend::blockdev::*;
-use crate::ext4_backend::config::*;
-use crate::ext4_backend::disknode::*;
-use crate::ext4_backend::endian::*;
-use crate::ext4_backend::error::*;
-use crate::ext4_backend::ext4::*;
+use crate::blockdev::*;
+use crate::config::*;
+use crate::disknode::*;
+use crate::endian::*;
+use crate::error::*;
+use crate::ext4::*;
 use alloc::vec;
 use alloc::vec::*;
 
@@ -1449,10 +1449,10 @@ mod tests {
     extern crate std;
 
     use super::*;
-    use crate::ext4_backend::bitmap_cache::CacheKey;
-    use crate::ext4_backend::blockdev::{BlockDevice, Jbd2Dev};
-    use crate::ext4_backend::error::{BlockDevError, BlockDevResult};
-    use crate::ext4_backend::ext4::{mkfs, mount};
+    use crate::bitmap_cache::CacheKey;
+    use crate::blockdev::{BlockDevice, Jbd2Dev};
+    use crate::error::{BlockDevError, BlockDevResult};
+    use crate::ext4::{mkfs, mount};
     use alloc::vec;
     use alloc::vec::Vec;
 

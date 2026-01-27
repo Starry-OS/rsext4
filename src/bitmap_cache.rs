@@ -1,8 +1,8 @@
 //! 位图缓存模块
 
 use crate::BITMAP_CACHE_MAX;
-use crate::ext4_backend::blockdev::*;
-use crate::ext4_backend::error::*;
+use crate::blockdev::*;
+use crate::error::*;
 use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
 use log::debug;

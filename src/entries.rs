@@ -2,8 +2,8 @@
 //!
 //! 定义了 ext4 文件系统中目录条目的数据结构和操作。
 
-use crate::ext4_backend::config::*;
-use crate::ext4_backend::endian::*;
+use crate::config::*;
+use crate::endian::*;
 use alloc::vec::Vec;
 
 /// Ext4 目录条目结构（传统格式）

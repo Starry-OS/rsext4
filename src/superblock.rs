@@ -2,9 +2,9 @@
 //!
 //! 定义了 ext4 文件系统的超级块结构，包含文件系统的基本元数据和参数。
 
-use crate::ext4_backend::config::*;
-use crate::ext4_backend::endian::*;
-use crate::ext4_backend::jbd2::jbdstruct::*;
+use crate::config::*;
+use crate::endian::*;
+use crate::jbd2::jbdstruct::*;
 
 /// UUID 结构
 pub struct UUID(pub [u32; 4]);

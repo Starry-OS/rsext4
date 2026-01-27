@@ -6,10 +6,10 @@ use alloc::boxed::Box;
 use alloc::vec::Vec;
 use log::{error, trace, warn};
 
-use crate::ext4_backend::config::JBD2_BUFFER_MAX;
-use crate::ext4_backend::config::*;
-use crate::ext4_backend::error::*;
-use crate::ext4_backend::jbd2::jbdstruct::*;
+use crate::config::JBD2_BUFFER_MAX;
+use crate::config::*;
+use crate::error::*;
+use crate::jbd2::jbdstruct::*;
 
 /// 需要调用块设备写操作的函数标记
 ///

@@ -2,7 +2,7 @@
 //!
 //! 定义了 ext4 文件系统的块组描述符结构和相关操作。
 
-use crate::ext4_backend::endian::*;
+use crate::endian::*;
 
 /// Ext4 块组描述符结构
 ///
@@ -543,17 +543,21 @@ impl DiskFormat for Ext4GroupDesc {
         write_u16_le(self.bg_inode_bitmap_csum_lo, &mut bytes[26..28]);
         write_u16_le(self.bg_itable_unused_lo, &mut bytes[28..30]);
         write_u16_le(self.bg_checksum, &mut bytes[30..32]);
-        write_u32_le(self.bg_block_bitmap_hi, &mut bytes[32..36]);
-        write_u32_le(self.bg_inode_bitmap_hi, &mut bytes[36..40]);
-        write_u32_le(self.bg_inode_table_hi, &mut bytes[40..44]);
-        write_u16_le(self.bg_free_blocks_count_hi, &mut bytes[44..46]);
-        write_u16_le(self.bg_free_inodes_count_hi, &mut bytes[46..48]);
-        write_u16_le(self.bg_used_dirs_count_hi, &mut bytes[48..50]);
-        write_u16_le(self.bg_itable_unused_hi, &mut bytes[50..52]);
-        write_u32_le(self.bg_exclude_bitmap_hi, &mut bytes[52..56]);
-        write_u16_le(self.bg_block_bitmap_csum_hi, &mut bytes[56..58]);
-        write_u16_le(self.bg_inode_bitmap_csum_hi, &mut bytes[58..60]);
-        write_u32_le(self.bg_reserved, &mut bytes[60..64]);
+
+        // 只有当缓冲区足够大时才写入64位扩展字段
+        if bytes.len() >= 64 {
+            write_u32_le(self.bg_block_bitmap_hi, &mut bytes[32..36]);
+            write_u32_le(self.bg_inode_bitmap_hi, &mut bytes[36..40]);
+            write_u32_le(self.bg_inode_table_hi, &mut bytes[40..44]);
+            write_u16_le(self.bg_free_blocks_count_hi, &mut bytes[44..46]);
+            write_u16_le(self.bg_free_inodes_count_hi, &mut bytes[46..48]);
+            write_u16_le(self.bg_used_dirs_count_hi, &mut bytes[48..50]);
+            write_u16_le(self.bg_itable_unused_hi, &mut bytes[50..52]);
+            write_u32_le(self.bg_exclude_bitmap_hi, &mut bytes[52..56]);
+            write_u16_le(self.bg_block_bitmap_csum_hi, &mut bytes[56..58]);
+            write_u16_le(self.bg_inode_bitmap_csum_hi, &mut bytes[58..60]);
+            write_u32_le(self.bg_reserved, &mut bytes[60..64]);
+        }
     }
 
     fn disk_size() -> usize {

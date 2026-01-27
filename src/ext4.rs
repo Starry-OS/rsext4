@@ -2,23 +2,23 @@
 //!
 //! 提供 ext4 文件系统的核心实现，包括文件系统挂载、卸载、文件操作等高层接口。
 
-use crate::ext4_backend::bitmap::InodeBitmap;
-use crate::ext4_backend::bitmap_cache::*;
-use crate::ext4_backend::blockdev::*;
-use crate::ext4_backend::blockgroup_description::*;
-use crate::ext4_backend::bmalloc::*;
-use crate::ext4_backend::config::*;
-use crate::ext4_backend::datablock_cache::*;
-use crate::ext4_backend::dir::*;
-use crate::ext4_backend::disknode::*;
-use crate::ext4_backend::endian::*;
-use crate::ext4_backend::error::*;
-use crate::ext4_backend::inodetable_cache::*;
-use crate::ext4_backend::jbd2::jbd2::*;
-use crate::ext4_backend::jbd2::jbdstruct::*;
-use crate::ext4_backend::loopfile::*;
-use crate::ext4_backend::superblock::*;
-use crate::ext4_backend::tool::*;
+use crate::bitmap::InodeBitmap;
+use crate::bitmap_cache::*;
+use crate::blockdev::*;
+use crate::blockgroup_description::*;
+use crate::bmalloc::*;
+use crate::config::*;
+use crate::datablock_cache::*;
+use crate::dir::*;
+use crate::disknode::*;
+use crate::endian::*;
+use crate::error::*;
+use crate::inodetable_cache::*;
+use crate::jbd2::jbd2::*;
+use crate::jbd2::jbdstruct::*;
+use crate::loopfile::*;
+use crate::superblock::*;
+use crate::tool::*;
 use log::trace;
 
 use alloc::collections::vec_deque::VecDeque;
@@ -878,8 +878,8 @@ impl Ext4FileSystem {
             .modify(block_dev, cache_key, bitmap_block, |data| {
                 free_ok = match self.block_allocator.free_block(data, block_in_group) {
                     Ok(()) => Ok(()),
-                    Err(crate::ext4_backend::bmalloc::AllocError::BitmapError(
-                        crate::ext4_backend::bitmap::BitmapError::AlreadyFree,
+                    Err(crate::bmalloc::AllocError::BitmapError(
+                        crate::bitmap::BitmapError::AlreadyFree,
                     )) => {
                         did_free = false;
                         Ok(())
@@ -933,8 +933,8 @@ impl Ext4FileSystem {
             .modify(block_dev, cache_key, bitmap_block, |data| {
                 free_ok = match self.inode_allocator.free_inode(data, inode_in_group) {
                     Ok(()) => Ok(()),
-                    Err(crate::ext4_backend::bmalloc::AllocError::BitmapError(
-                        crate::ext4_backend::bitmap::BitmapError::AlreadyFree,
+                    Err(crate::bmalloc::AllocError::BitmapError(
+                        crate::bitmap::BitmapError::AlreadyFree,
                     )) => {
                         did_free = false;
                         Ok(())

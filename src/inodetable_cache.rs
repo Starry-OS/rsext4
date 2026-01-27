@@ -2,11 +2,11 @@
 //!
 //! 提供inode结构的缓存管理，支持延迟写回和LRU淘汰
 
-use crate::ext4_backend::blockdev::*;
-use crate::ext4_backend::config::*;
-use crate::ext4_backend::disknode::*;
-use crate::ext4_backend::endian::*;
-use crate::ext4_backend::error::*;
+use crate::blockdev::*;
+use crate::config::*;
+use crate::disknode::*;
+use crate::endian::*;
+use crate::error::*;
 use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
 /// Inode缓存键（全局inode号）

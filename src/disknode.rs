@@ -4,7 +4,7 @@
 
 use log::debug;
 
-use crate::ext4_backend::endian::*;
+use crate::endian::*;
 
 /// Ext4 磁盘 Inode 结构
 ///

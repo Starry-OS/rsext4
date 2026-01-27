@@ -3,13 +3,13 @@
 //! 提供基于哈希树的目录查找功能，替代线性搜索以提高大型目录的性能
 //! 支持 Ext4 HTree 索引格式，包括多种哈希算法
 
-use crate::ext4_backend::blockdev::*;
-use crate::ext4_backend::config::*;
-use crate::ext4_backend::disknode::*;
-use crate::ext4_backend::endian::*;
-use crate::ext4_backend::entries::*;
-use crate::ext4_backend::ext4::*;
-use crate::ext4_backend::loopfile::*;
+use crate::blockdev::*;
+use crate::config::*;
+use crate::disknode::*;
+use crate::endian::*;
+use crate::entries::*;
+use crate::ext4::*;
+use crate::loopfile::*;
 
 use alloc::vec::Vec;
 use log::error;
@@ -445,7 +445,7 @@ pub fn lookup_directory_entry<B: BlockDevice>(
 mod tests {
     use super::*;
 
-    use crate::ext4_backend::error::BlockDevError;
+    use crate::error::BlockDevError;
     use alloc::vec::Vec;
     // Mock block device
     struct MockBlockDevice {
@@ -525,17 +525,17 @@ mod tests {
 
     // Create test filesystem
     fn create_test_fs() -> Ext4FileSystem {
-        use crate::ext4_backend::bitmap_cache::BitmapCache;
-        use crate::ext4_backend::bmalloc::*;
-        use crate::ext4_backend::datablock_cache::DataBlockCache;
-        use crate::ext4_backend::inodetable_cache::InodeCache;
-        use crate::ext4_backend::superblock::Ext4Superblock;
+        use crate::bitmap_cache::BitmapCache;
+        use crate::bmalloc::*;
+        use crate::datablock_cache::DataBlockCache;
+        use crate::inodetable_cache::InodeCache;
+        use crate::superblock::Ext4Superblock;
         let mut superblock = Ext4Superblock::default();
         superblock.s_hash_seed = [0x12345678, 0x87654321, 0xABCDEF00, 0x00FEDCBA];
         superblock.s_def_hash_version = 0x8; // Half SipHash
 
         let inode_size = match superblock.s_inode_size {
-            0 => crate::ext4_backend::config::DEFAULT_INODE_SIZE as usize,
+            0 => crate::config::DEFAULT_INODE_SIZE as usize,
             n => n as usize,
         };
 

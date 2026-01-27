@@ -1,8 +1,8 @@
 //! 位图分配器模块
 
-use crate::ext4_backend::bitmap::*;
-use crate::ext4_backend::blockgroup_description::*;
-use crate::ext4_backend::superblock::*;
+use crate::bitmap::*;
+use crate::blockgroup_description::*;
+use crate::superblock::*;
 /// 块分配器错误类型
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AllocError {

@@ -2,8 +2,8 @@
 //!
 //! 提供各种辅助函数，如 UUID 生成等。
 
-use crate::ext4_backend::ext4::*;
-use crate::ext4_backend::superblock::*;
+use crate::ext4::*;
+use crate::superblock::*;
 use alloc::vec;
 use alloc::vec::*;
 use log::debug;

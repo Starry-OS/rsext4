@@ -9,58 +9,40 @@
 pub enum BlockDevError {
     /// 非法输入
     InvalidInput,
-
     /// 读取错误
     ReadError,
-
     /// 写入错误
     WriteError,
-
     /// 块号超出范围
     BlockOutOfRange { block_id: u32, max_blocks: u64 },
-
     /// 无效的块大小
     InvalidBlockSize { size: usize, expected: usize },
-
     /// 缓冲区太小
     BufferTooSmall { provided: usize, required: usize },
-
     /// 设备未打开
     DeviceNotOpen,
-
     /// 设备已关闭
     DeviceClosed,
-
     /// I/O错误
     IoError,
-
     /// 对齐错误（数据未对齐到块边界）
     AlignmentError { offset: u64, alignment: u32 },
-
     /// 设备忙
     DeviceBusy,
-
     /// 超时
     Timeout,
-
     /// 不支持的操作
     Unsupported,
-
     /// 设备只读
     ReadOnly,
-
     /// 空间不足
     NoSpace,
-
     /// 权限错误
     PermissionDenied,
-
     /// 设备损坏或数据损坏
     Corrupted,
-
     /// 校验和错误
     ChecksumError,
-
     /// 未知错误
     Unknown,
 }

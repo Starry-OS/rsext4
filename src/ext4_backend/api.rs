@@ -37,13 +37,7 @@ pub struct OpenFile {
 /// # 返回值
 ///
 /// 返回 `Ext4FileSystem` 实例或错误
-///
-/// # 示例
-///
-/// ```rust
-/// let mut fs = fs_mount(&mut device)?;
-/// # Ok::<(), Box<dyn std::error::Error>>(())
-/// ```
+
 pub fn fs_mount<B: BlockDevice>(dev: &mut Jbd2Dev<B>) -> BlockDevResult<Ext4FileSystem> {
     ext4::mount(dev)
 }
@@ -58,13 +52,6 @@ pub fn fs_mount<B: BlockDevice>(dev: &mut Jbd2Dev<B>) -> BlockDevResult<Ext4File
 /// # 返回值
 ///
 /// 成功时返回 `Ok(())`，失败时返回错误
-///
-/// # 示例
-///
-/// ```rust
-/// fs_umount(fs, &mut device)?;
-/// # Ok::<(), Box<dyn std::error::Error>>(())
-/// ```
 pub fn fs_umount<B: BlockDevice>(fs: Ext4FileSystem, dev: &mut Jbd2Dev<B>) -> BlockDevResult<()> {
     ext4::umount(fs, dev)
 }
@@ -79,12 +66,6 @@ pub fn fs_umount<B: BlockDevice>(fs: Ext4FileSystem, dev: &mut Jbd2Dev<B>) -> Bl
 /// # 返回值
 ///
 /// 成功时返回 `true`
-///
-/// # 示例
-///
-/// ```rust
-/// lseek(&mut file, 0);  // 移动到文件开头
-/// ```
 pub fn lseek(file: &mut OpenFile, location: u64) -> bool {
     file.offset = location;
     true
@@ -116,13 +97,6 @@ fn refresh_open_file_inode<B: BlockDevice>(
 /// # 返回值
 ///
 /// 返回 `OpenFile` 实例或错误
-///
-/// # 示例
-///
-/// ```rust
-/// let mut file = open(&mut device, &mut fs, "/test.txt", true)?;
-/// # Ok::<(), Box<dyn std::error::Error>>(())
-/// ```
 pub fn open<B: BlockDevice>(
     dev: &mut Jbd2Dev<B>,
     fs: &mut Ext4FileSystem,
@@ -172,13 +146,6 @@ pub fn open<B: BlockDevice>(
 /// # 返回值
 ///
 /// 成功时返回 `Ok(())`，失败时返回错误
-///
-/// # 示例
-///
-/// ```rust
-/// write_at(&mut device, &mut fs, &mut file, b"Hello, world!")?;
-/// # Ok::<(), Box<dyn std::error::Error>>(())
-/// ```
 pub fn write_at<B: BlockDevice>(
     dev: &mut Jbd2Dev<B>,
     fs: &mut Ext4FileSystem,
@@ -212,13 +179,6 @@ pub fn write_at<B: BlockDevice>(
 /// # 返回值
 ///
 /// 返回文件内容（可选）或错误
-///
-/// # 示例
-///
-/// ```rust
-/// let data = read(&mut device, &mut fs, "/test.txt")?;
-/// # Ok::<(), Box<dyn std::error::Error>>(())
-/// ```
 pub fn read<B: BlockDevice>(
     dev: &mut Jbd2Dev<B>,
     fs: &mut Ext4FileSystem,
@@ -241,13 +201,6 @@ pub fn read<B: BlockDevice>(
 /// # 返回值
 ///
 /// 返回读取的数据或错误
-///
-/// # 示例
-///
-/// ```rust
-/// let data = read_at(&mut device, &mut fs, &mut file, 1024)?;
-/// # Ok::<(), Box<dyn std::error::Error>>(())
-/// ```
 pub fn read_at<B: BlockDevice>(
     dev: &mut Jbd2Dev<B>,
     fs: &mut Ext4FileSystem,

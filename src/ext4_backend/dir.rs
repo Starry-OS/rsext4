@@ -1,5 +1,6 @@
-//创建文件夹功能模块
-
+//! # 目录操作模块
+//! 
+//! 提供对 ext4 文件系统中目录的创建、删除、遍历等操作功能。
 
 use crate::alloc::string::ToString;
 use crate::ext4_backend::blockdev::*;
@@ -17,15 +18,28 @@ use alloc::vec::Vec;
 use log::error;
 use log::debug;
 
+/// 文件操作错误类型
 #[derive(Debug)]
 pub enum FileError {
+    /// 目录已存在
     DirExist,
+    /// 文件已存在
     FileExist,
+    /// 目录未找到
     DirNotFound,
+    /// 文件未找到
     FileNotFound,
 }
 
-///合法化路径：去掉重复的 '/'
+/// 合法化路径：去掉重复的 '/'
+/// 
+/// # 参数
+/// 
+/// * `pat` - 输入路径
+/// 
+/// # 返回值
+/// 
+/// 返回处理后的路径
 pub fn split_paren_child_and_tranlatevalid(pat: &str) -> String {
     //去掉重复///类型和中间空路径
     let mut last_c = '\0';

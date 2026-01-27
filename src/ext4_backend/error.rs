@@ -1,6 +1,10 @@
-//!错误处理模块
+//! # 错误处理模块
 //! 
+//! 定义了 rsext4 库中使用的所有错误类型，提供清晰的错误信息以便调试和处理
+
 /// 块设备错误类型
+/// 
+/// 定义了所有可能的块设备操作错误
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BlockDevError {
 
@@ -106,14 +110,18 @@ impl core::fmt::Display for BlockDevError {
     }
 }
 /// 块设备操作结果类型
+/// 
+/// 用于块设备操作的错误处理
 pub type BlockDevResult<T> = Result<T, BlockDevError>;
 
 
 
-/// Ext4文件系统错误
+/// Ext4 文件系统错误
+/// 
+/// 定义了所有可能的 ext4 文件系统操作错误
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RSEXT4Error {
-    /// IO错误
+    /// IO 错误
     IoError,
     /// 魔数无效
     InvalidMagic,
@@ -139,3 +147,8 @@ impl core::fmt::Display for RSEXT4Error {
         }
     }
 }
+
+/// Ext4 文件系统操作结果类型
+/// 
+/// 用于 ext4 文件系统操作的错误处理
+pub type Ext4Result<T> = Result<T, RSEXT4Error>;

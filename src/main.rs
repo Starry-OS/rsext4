@@ -1,3 +1,7 @@
+//! # rsext4 测试程序
+//! 
+//! 用于测试 rsext4 文件系统库的主程序，提供基本的文件系统操作测试。
+
 #![deny(unused)]
 #![deny(dead_code)]
 #![deny(warnings)]

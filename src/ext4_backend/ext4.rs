@@ -1,6 +1,6 @@
-//! Ext4文件系统主调用入口
+//! # Ext4 文件系统主调用入口
 //!
-//! 提供文件系统挂载、卸载、文件操作等高层接口
+//! 提供 ext4 文件系统的核心实现，包括文件系统挂载、卸载、文件操作等高层接口。
 
 use crate::ext4_backend::bitmap::InodeBitmap;
 use crate::ext4_backend::bitmap_cache::*;
@@ -26,8 +26,23 @@ use alloc::vec::Vec;
 use log::{debug, error, info, warn};
 
 
-/// Ext4文件系统实例
-/// 管理挂载后的文件系统状态
+/// Ext4 文件系统实例
+/// 
+/// 管理挂载后的文件系统状态，包含文件系统的所有核心数据结构
+/// 
+/// # 字段
+/// 
+/// * `superblock` - 文件系统超级块，包含文件系统元数据
+/// * `group_descs` - 块组描述符数组
+/// * `block_allocator` - 块分配器，管理数据块的分配和释放
+/// * `inode_allocator` - Inode分配器，管理inode的分配和释放
+/// * `bitmap_cache` - 位图缓存，按需加载，使用LRU淘汰策略
+/// * `inodetable_cahce` - Inode表缓存
+/// * `datablock_cache` - 数据块缓存
+/// * `root_inode` - 根目录inode号
+/// * `group_count` - 块组数量
+/// * `mounted` - 是否已挂载标志
+/// * `journal_sb_block_start` - Journal 超级块起始块号
 pub struct Ext4FileSystem {
     /// 超级块
     pub superblock: Ext4Superblock,
@@ -54,7 +69,16 @@ pub struct Ext4FileSystem {
 }
 
 impl Ext4FileSystem {
-    ///对应inode是否已经被分配
+    /// 检查指定inode是否已经被分配
+    /// 
+    /// # 参数
+    /// 
+    /// * `device` - 可变引用的块设备
+    /// * `inode_num` - 要检查的inode号
+    /// 
+    /// # 返回值
+    /// 
+    /// 如果inode已分配返回`true`，否则返回`false`
     pub fn inode_num_already_allocted<B: BlockDevice>(
         &mut self,
         device: &mut Jbd2Dev<B>,

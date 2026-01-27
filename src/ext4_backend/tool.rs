@@ -1,10 +1,18 @@
+//! # 工具函数模块
+//! 
+//! 提供各种辅助函数，如 UUID 生成等。
+
 use crate::ext4_backend::ext4::*;
 use crate::ext4_backend::superblock::*;
 use alloc::vec;
 use alloc::vec::*;
 use log::debug;
 
-///UUID生成 需要4个u32的uuid
+/// 生成 UUID，返回 4 个 u32 的数组
+/// 
+/// # 返回值
+/// 
+/// 返回生成的 UUID
 pub fn generate_uuid() -> UUID {
     //uuid生成策略 将函数指针进行异或
     let mut orign_uuid = [1_u32; 4];
@@ -22,7 +30,11 @@ pub fn generate_uuid() -> UUID {
     UUID(orign_uuid)
 }
 
-///UUID生成 需要16个u8的uuid
+/// 生成 UUID，返回 16 个 u8 的数组
+/// 
+/// # 返回值
+/// 
+/// 返回生成的 UUID
 pub fn generate_uuid_8() -> [u8; 16] {
     //uuid生成策略 将函数指针进行异或
     let mut orign_uuid = [1_u8; 16];

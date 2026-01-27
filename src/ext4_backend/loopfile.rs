@@ -1,4 +1,6 @@
-//文件遍历
+//! # 文件遍历和操作模块
+//! 
+//! 提供文件内容读取、块解析等功能。
 
 use alloc::collections::BTreeMap;
 use alloc::vec::Vec;

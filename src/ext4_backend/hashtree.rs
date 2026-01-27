@@ -1,7 +1,7 @@
-//! Directory entry HashTree implementation
-//!
-//! Provides hash tree-based directory lookup functionality, replacing linear search to improve performance for large directories
-//! Supports Ext4 HTree index format, including multiple hash algorithms
+//! # 目录条目 HashTree 实现
+//! 
+//! 提供基于哈希树的目录查找功能，替代线性搜索以提高大型目录的性能
+//! 支持 Ext4 HTree 索引格式，包括多种哈希算法
 
 use crate::ext4_backend::blockdev::*;
 use crate::ext4_backend::config::*;

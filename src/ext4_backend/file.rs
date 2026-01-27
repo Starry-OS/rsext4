@@ -1,3 +1,7 @@
+//! # 文件操作模块
+//! 
+//! 提供对 ext4 文件系统中文件的读写、创建、删除等操作功能。
+
 use core::u32;
 
 use alloc::string::ToString;
@@ -16,9 +20,18 @@ use crate::ext4_backend::loopfile::*;
 use crate::ext4_backend::error::*;
 use alloc::string::String;
 
-
-
-
+/// 重命名文件或目录
+/// 
+/// # 参数
+/// 
+/// * `device` - 可变引用的块设备
+/// * `fs` - 可变引用的文件系统
+/// * `old_path` - 旧路径
+/// * `new_path` - 新路径
+/// 
+/// # 返回值
+/// 
+/// 成功时返回 `Ok(())`，失败时返回错误
 pub fn rename<B: BlockDevice>(
     device: &mut Jbd2Dev<B>,
     fs: &mut Ext4FileSystem,

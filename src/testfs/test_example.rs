@@ -1,8 +1,13 @@
+//! # 文件系统测试示例
+//! 
+//! 提供对 ext4 文件系统各项功能的测试代码。
+
 use crate::ext4_backend::loopfile::get_file_inode;
 use rsext4::*;
 use std::io::Read;
 use std::io::Write;
-//mkfs
+
+/// 格式化文件系统测试
 pub fn test_mkfs<B: BlockDevice>(block_dev: &mut Jbd2Dev<B>) {
     mkfs(block_dev).expect("File system mount failed panic!");
 }

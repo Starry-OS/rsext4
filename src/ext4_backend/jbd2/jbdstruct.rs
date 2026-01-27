@@ -1,3 +1,7 @@
+//! # JBD2 数据结构定义
+//! 
+//! 定义了 JBD2 日志系统使用的各种数据结构。
+
 use crate::ext4_backend::config::*;
 use crate::ext4_backend::endian::*;
 use alloc::boxed::Box;

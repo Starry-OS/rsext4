@@ -1,4 +1,8 @@
 
+//! # 块设备实现
+//!
+//! 定义了块设备的抽象接口和实现，为文件系统提供底层存储支持
+
 use alloc::boxed::Box;
 use alloc::vec::Vec;
 use log::{error, trace, warn};
@@ -9,43 +13,85 @@ use crate::ext4_backend::error::*;
 use crate::ext4_backend::config::JBD2_BUFFER_MAX;
 
 
-///可以调用block write的函数标记 有序管理写,jbd2需要
+/// 需要调用块设备写操作的函数标记
+/// 
+/// 用于jbd2日志系统，标识需要有序管理写的函数
 pub trait INeedBlockdevToWrite {}
 
 /// 外部需要实现的块设备trait
+/// 
+/// 定义了块设备的基本操作接口，用户需要实现此trait来支持不同的存储后端
 pub trait BlockDevice {
     /// 写入数据到块设备
+    /// 
+    /// # 参数
+    /// 
     /// * `buffer` - 要写入的数据
     /// * `block_id` - 起始块号
     /// * `count` - 块数量
+    /// 
+    /// # 返回值
+    /// 
+    /// 成功时返回 `Ok(())`，失败时返回错误
     fn write(&mut self, buffer: &[u8], block_id: u32, count: u32) -> BlockDevResult<()>;
 
     /// 从块设备读取数据
+    /// 
+    /// # 参数
+    /// 
     /// * `buffer` - 读取数据的目标缓冲区
     /// * `block_id` - 起始块号
     /// * `count` - 块数量
+    /// 
+    /// # 返回值
+    /// 
+    /// 成功时返回 `Ok(())`，失败时返回错误
     fn read(&mut self, buffer: &mut [u8], block_id: u32, count: u32) -> BlockDevResult<()>;
 
     /// 打开块设备
+    /// 
+    /// # 返回值
+    /// 
+    /// 成功时返回 `Ok(())`，失败时返回错误
     fn open(&mut self) -> BlockDevResult<()>;
 
     /// 关闭块设备
+    /// 
+    /// # 返回值
+    /// 
+    /// 成功时返回 `Ok(())`，失败时返回错误
     fn close(&mut self) -> BlockDevResult<()>;
 
     /// 获取块设备的总块数
+    /// 
+    /// # 返回值
+    /// 
+    /// 返回设备的总块数
     fn total_blocks(&self) -> u64;
 
     /// 获取块大小（字节）
+    /// 
+    /// # 返回值
+    /// 
+    /// 默认返回 512 字节
     fn block_size(&self) -> u32 {
         512 // 默认512字节
     }
 
     /// 刷新缓存到磁盘
+    /// 
+    /// # 返回值
+    /// 
+    /// 默认实现为空操作
     fn flush(&mut self) -> BlockDevResult<()> {
         Ok(()) // 默认实现为空操作
     }
 
     /// 检查设备是否已打开
+    /// 
+    /// # 返回值
+    /// 
+    /// 默认返回 `true`
     fn is_open(&self) -> bool {
         true // 默认认为已打开
     }

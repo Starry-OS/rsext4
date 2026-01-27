@@ -1,3 +1,7 @@
+//! # JBD2 日志系统实现
+//! 
+//! 实现了 ext4 文件系统的日志功能，确保事务的原子性和一致性。
+
 use crate::ext4_backend::blockdev::*;
 use crate::ext4_backend::config::*;
 use crate::ext4_backend::disknode::*;

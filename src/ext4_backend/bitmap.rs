@@ -1,6 +1,9 @@
+//! # 位图操作模块
+//! 
+//! 提供对块和inode位图的操作，用于跟踪块和inode的分配状态。
+
 use log::error;
 use log::warn;
-/// 位图用于跟踪块和inode的分配状态
 
 /// 块位图包装结构
 #[derive(Debug)]

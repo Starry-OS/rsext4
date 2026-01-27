@@ -1,10 +1,15 @@
+//! # 磁盘节点模块
+//! 
+//! 定义了 ext4 文件系统的 inode 结构和相关操作。
+
 use log::debug;
 
 use crate::ext4_backend::endian::*;
 
-/// Ext4 磁盘Inode结构
-/// Inode是文件系统中存储文件元数据的核心数据结构
-/// 每个文件和目录都有一个对应的inode
+/// Ext4 磁盘 Inode 结构
+/// 
+/// Inode 是文件系统中存储文件元数据的核心数据结构
+/// 每个文件和目录都有一个对应的 inode
 #[repr(C)]
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Ext4Inode {

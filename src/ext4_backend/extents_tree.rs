@@ -1,3 +1,7 @@
+//! # Extents 树模块
+//! 
+//! 实现 ext4 文件系统的 extents 功能，用于高效管理文件的连续块分配。
+
 use log::{debug, error};
 
 use crate::ext4_backend::blockdev::*;

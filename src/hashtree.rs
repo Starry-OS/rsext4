@@ -280,7 +280,9 @@ impl HashTreeManager {
         for (entry, offset) in iter {
             if entry.name == target_name {
                 return Ok(HashTreeSearchResult {
-                    entry: unsafe { core::mem::transmute(entry) },
+                    entry: unsafe {
+                        core::mem::transmute::<Ext4DirEntryInfo<'_>, Ext4DirEntryInfo<'_>>(entry)
+                    },
                     block_num,
                     offset: offset as usize,
                 });
@@ -341,8 +343,8 @@ impl HashTreeManager {
 
         // Fast path for extent-based directories: resolve all blocks once, then scan.
         if dir_inode.have_extend_header_and_use_extend() {
-            let mut inode_clone = dir_inode.clone();
-            let blocks_map = match resolve_inode_block_allextend(fs, block_dev, &mut inode_clone) {
+            let mut inode_copy = *dir_inode;
+            let blocks_map = match resolve_inode_block_allextend(fs, block_dev, &mut inode_copy) {
                 Ok(v) => v,
                 Err(_) => return Err(HashTreeError::BlockOutOfRange),
             };
@@ -361,7 +363,11 @@ impl HashTreeManager {
                 let block_data = &cached_block.data[..block_bytes];
                 if let Some(entry) = classic_dir::find_entry(block_data, target_name) {
                     return Ok(HashTreeSearchResult {
-                        entry: unsafe { core::mem::transmute(entry) },
+                        entry: unsafe {
+                            core::mem::transmute::<Ext4DirEntryInfo<'_>, Ext4DirEntryInfo<'_>>(
+                                entry,
+                            )
+                        },
                         block_num: phys as u32,
                         offset: 0,
                     });

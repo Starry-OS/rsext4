@@ -41,7 +41,7 @@ impl JBD2DEVSYSTEM {
                 self.head = 0;
                 target_use = self.start_block + self.jbd2_super_block.s_start;
             }
-            return target_use;
+            target_use
         } else {
             //不是第一次提交
             self.head += 1;
@@ -51,12 +51,13 @@ impl JBD2DEVSYSTEM {
                 self.head = 0;
                 target_use = self.start_block + self.jbd2_super_block.s_start;
             }
-            return target_use;
+            target_use
         }
     }
     ///提交事务
     /// 允许使用原始块设备!
     /// update:Vec<JBD2_UPDATE>
+    #[allow(clippy::result_unit_err)]
     pub fn commit_transaction<B: BlockDevice>(&mut self, block_dev: &mut B) -> Result<bool, ()> {
         let tid = self.sequence; //事务id
         debug!(
@@ -70,7 +71,7 @@ impl JBD2DEVSYSTEM {
             self.jbd2_super_block.s_start,
         );
 
-        if self.commit_queue.len() <= 0 {
+        if self.commit_queue.is_empty() {
             warn!("No thing need to commit");
             return Ok(false);
         }
@@ -78,9 +79,11 @@ impl JBD2DEVSYSTEM {
         let mut desc_buffer = vec![0; BLOCK_SIZE];
 
         //写header->内存缓存
-        let mut new_jbd_header = JournalHeaderS::default();
-        new_jbd_header.h_blocktype = 1; //Descriptor
-        new_jbd_header.h_sequence = tid; //设置事务id
+        let new_jbd_header = JournalHeaderS {
+            h_blocktype: 1,
+            h_sequence: tid,
+            ..Default::default()
+        };
         new_jbd_header.to_disk_bytes(&mut desc_buffer[0..JournalHeaderS::disk_size()]);
 
         let mut current_offset = 12; //跳过头
@@ -255,11 +258,13 @@ impl JBD2DEVSYSTEM {
 
                 // 注意：t_blocknr==0 在 ext4 上是合法的（例如 superblock/group desc 等元数据），
                 // 不能直接用 "t_blocknr==0" 当作 tag 结束条件。
-                // 我们只在“当前 8 字节全 0 且后续全部为 0 padding”时，才认为 descriptor 结束。
-                if tag.t_blocknr == 0 && tag.t_checksum == 0 && tag.t_flags == 0 {
-                    if desc_buf[off + 8..].iter().all(|b| *b == 0) {
-                        break;
-                    }
+                // 我们只在"当前 8 字节全 0 且后续全部为 0 padding"时，才认为 descriptor 结束。
+                if tag.t_blocknr == 0
+                    && tag.t_checksum == 0
+                    && tag.t_flags == 0
+                    && desc_buf[off + 8..].iter().all(|b| *b == 0)
+                {
+                    break;
                 }
 
                 debug!(
@@ -451,13 +456,14 @@ pub fn create_journal_entry<B: BlockDevice>(
     })
     .expect("Jouranl inode create faild!");
 
-    let mut jbd2_sb = JournalSuperBllockS::default();
-
-    jbd2_sb.s_maxlen = (free_block.len() - 1) as u32; //修正块数 排除超级块
-    jbd2_sb.s_start = 0; //相对于superblock
-    jbd2_sb.s_blocksize = BLOCK_SIZE_U32;
-    jbd2_sb.s_sequence = 1;
-    jbd2_sb.s_first = 1; //第一个日志块 相对于superblock
+    let jbd2_sb = JournalSuperBllockS {
+        s_maxlen: (free_block.len() - 1) as u32,
+        s_start: 0,
+        s_blocksize: BLOCK_SIZE_U32,
+        s_sequence: 1,
+        s_first: 1,
+        ..Default::default()
+    };
 
     fs.datablock_cache.modify_new(free_block[0], |data| {
         jbd2_sb.to_disk_bytes(data);

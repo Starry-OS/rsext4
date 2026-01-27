@@ -94,6 +94,7 @@ pub fn is_numbers_power(number: usize, base: usize) -> bool {
 /// - `inode_table_blocks` 每组 inode 表占用的块数
 /// - `group0_block_bitmap`/`group0_inode_bitmap`/`group0_inode_table` 组0的固定布局
 /// - `gdt_blocks` 主 GDT 占用的块数（用于计算备份 GDT 大小）
+#[allow(clippy::too_many_arguments)]
 pub fn cloc_group_layout(
     gid: u32,
     sb: &Ext4Superblock,

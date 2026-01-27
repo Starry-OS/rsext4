@@ -236,7 +236,7 @@ impl Ext4FileSystem {
         debug!("Allocators initialized");
 
         // 7. 初始化位图缓存（最多缓存8个位图）
-        let bitmap_cache = BitmapCache::default();
+        let bitmap_cache = BitmapCache::create_default();
         debug!("Bitmap cache initialized (lazy loading)");
 
         // 初始化inode缓存
@@ -1260,38 +1260,23 @@ pub fn mkfs<B: BlockDevice>(block_dev: &mut Jbd2Dev<B>) -> BlockDevResult<()> {
 
 /// 构建超级块 不管字节序
 fn build_superblock(total_blocks: u64, layout: &FsLayoutInfo) -> Ext4Superblock {
-    let mut sb = Ext4Superblock::default();
-
-    // 魔数
-    sb.s_magic = EXT4_SUPER_MAGIC;
-
-    // 块信息
-    sb.s_blocks_count_lo = (total_blocks & 0xFFFFFFFF) as u32;
-    sb.s_blocks_count_hi = (total_blocks >> 32) as u32;
-
-    // Ext4 标准：块大小 = 1024 << s_log_block_size
-    sb.s_log_block_size = LOG_BLOCK_SIZE;
-    // 簇大小目前与块大小一致
-    sb.s_log_cluster_size = LOG_BLOCK_SIZE;
-
-    // 每组块数 / inode 数量
-    sb.s_blocks_per_group = layout.blocks_per_group;
-    sb.s_inodes_per_group = layout.inodes_per_group;
-    // 与块大小一致的簇配置：clusters_per_group = blocks_per_group
-    sb.s_clusters_per_group = layout.blocks_per_group;
-
-    // inode 信息
-    sb.s_inodes_count = layout.groups * layout.inodes_per_group;
-    sb.s_inode_size = layout.inode_size;
-    // 第一个非保留 inode（通常为 11 = 保留 1..10）
-    sb.s_first_ino = RESERVED_INODES + 1;
-
-    // 第一个数据块
-    sb.s_first_data_block = layout.first_data_block;
-
-    // 预留块数（低/高 32 位）
-    sb.s_r_blocks_count_lo = (layout.reserved_blocks & 0xFFFFFFFF) as u32;
-    sb.s_r_blocks_count_hi = (layout.reserved_blocks >> 32) as u32;
+    let mut sb = Ext4Superblock {
+        s_magic: EXT4_SUPER_MAGIC,
+        s_blocks_count_lo: (total_blocks & 0xFFFFFFFF) as u32,
+        s_blocks_count_hi: (total_blocks >> 32) as u32,
+        s_log_block_size: LOG_BLOCK_SIZE,
+        s_log_cluster_size: LOG_BLOCK_SIZE,
+        s_blocks_per_group: layout.blocks_per_group,
+        s_inodes_per_group: layout.inodes_per_group,
+        s_clusters_per_group: layout.blocks_per_group,
+        s_inodes_count: layout.groups * layout.inodes_per_group,
+        s_inode_size: layout.inode_size,
+        s_first_ino: RESERVED_INODES + 1,
+        s_first_data_block: layout.first_data_block,
+        s_r_blocks_count_lo: (layout.reserved_blocks & 0xFFFFFFFF) as u32,
+        s_r_blocks_count_hi: (layout.reserved_blocks >> 32) as u32,
+        ..Default::default()
+    };
 
     //设置hash种子
     //需要生成UUID
@@ -1613,15 +1598,17 @@ fn initialize_group_0<B: BlockDevice>(
     }
 
     //  更新块组0的描述符（清除UNINIT标志）
-    let mut desc = Ext4GroupDesc::default();
-    desc.bg_flags = Ext4GroupDesc::EXT4_BG_INODE_ZEROED;
-    desc.bg_free_blocks_count_lo = layout
-        .blocks_per_group
-        .saturating_sub(layout.group0_metadata_blocks) as u16;
-    desc.bg_free_inodes_count_lo = layout.inodes_per_group.saturating_sub(RESERVED_INODES) as u16;
-    desc.bg_block_bitmap_lo = block_bitmap_blk;
-    desc.bg_inode_bitmap_lo = inode_bitmap_blk;
-    desc.bg_inode_table_lo = inode_table_blk;
+    let desc = Ext4GroupDesc {
+        bg_flags: Ext4GroupDesc::EXT4_BG_INODE_ZEROED,
+        bg_free_blocks_count_lo: layout
+            .blocks_per_group
+            .saturating_sub(layout.group0_metadata_blocks) as u16,
+        bg_free_inodes_count_lo: layout.inodes_per_group.saturating_sub(RESERVED_INODES) as u16,
+        bg_block_bitmap_lo: block_bitmap_blk,
+        bg_inode_bitmap_lo: inode_bitmap_blk,
+        bg_inode_table_lo: inode_table_blk,
+        ..Default::default()
+    };
 
     write_group_desc(block_dev, 0, &desc)?;
 

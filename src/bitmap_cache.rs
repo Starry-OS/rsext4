@@ -89,7 +89,7 @@ impl BitmapCache {
     }
 
     /// 创建默认配置的缓存
-    pub fn default() -> Self {
+    pub fn create_default() -> Self {
         Self::new(BITMAP_CACHE_MAX)
     }
 

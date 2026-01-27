@@ -135,7 +135,7 @@ impl Ext4Inode {
     ///检查是否有extend树的结构
     /// 检查EXT4_EXTENTS_FL标志和标志extend头
     pub fn have_extend_header_and_use_extend(&self) -> bool {
-        if !Self::is_extent(&self) {
+        if !Self::is_extent(self) {
             debug!("Inode not have extend flag!");
             return false;
         }

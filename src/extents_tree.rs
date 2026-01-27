@@ -250,6 +250,7 @@ impl<'a> ExtentTree<'a> {
     }
 
     /// 在给定节点下查找逻辑块对应的 extent
+    #[allow(clippy::only_used_in_recursion)]
     fn find_in_node<B: BlockDevice>(
         &mut self,
         dev: &mut Jbd2Dev<B>,
@@ -531,6 +532,7 @@ impl<'a> ExtentTree<'a> {
             }
         }
 
+        #[allow(clippy::too_many_arguments)]
         fn leaf_step<'t, B: BlockDevice>(
             tree: &mut ExtentTree<'t>,
             fs: &mut Ext4FileSystem,

@@ -40,16 +40,16 @@ jobs:
           components: rust-src
 
       - name: Build docs
-        run: cargo doc --no-deps --target x86_64-unknown-linux-gnu
+        run: cargo doc --no-deps --target aarch64-unknown-none-softfloat
 
       - name: Create index redirect
         run: |
-          printf '<meta http-equiv="refresh" content="0;url=rsext4/index.html">' > target/x86_64-unknown-linux-gnu/doc/index.html
+          printf '<meta http-equiv="refresh" content="0;url=rsext4/index.html">' > target/aarch64-unknown-none-softfloat/doc/index.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: target/x86_64-unknown-linux-gnu/doc
+          path: target/aarch64-unknown-none-softfloat/doc
 
   deploy-doc:
     name: Deploy to GitHub Pages

@@ -270,7 +270,7 @@ mod directory_functional_tests {
         delete_dir(&mut fs, &mut jbd2_dev, "/nonempty");
 
         // 验证目录是否还存在
-        let result = mkfile(
+        let _result = mkfile(
             &mut jbd2_dev,
             &mut fs,
             "/nonempty/another_file.txt",

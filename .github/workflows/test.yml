@@ -26,5 +26,5 @@ jobs:
       - name: Run library tests
         run: cargo test --lib
 
-      - name: Run integration tests
+      - name: Run function & integration tests
         run: cargo test --test '*'

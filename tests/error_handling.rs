@@ -2,7 +2,7 @@
 //!
 //! 测试文件系统在各种错误条件下的行为
 
-use rsext4::error::{BlockDevError, BlockDevResult, RSEXT4Error};
+use rsext4::error::{BlockDevError, BlockDevResult};
 use rsext4::*;
 
 /// 可控错误的模拟块设备
@@ -32,40 +32,6 @@ impl ErrorMockDevice {
             fail_after_bytes: None,
             bytes_written: 0,
         }
-    }
-
-    fn set_open_failure(&mut self, should_fail: bool) {
-        self.fail_on_open = should_fail;
-    }
-
-    fn set_close_failure(&mut self, should_fail: bool) {
-        self.fail_on_close = should_fail;
-    }
-
-    fn set_read_failure(&mut self, should_fail: bool) {
-        self.fail_on_read = should_fail;
-    }
-
-    fn set_write_failure(&mut self, should_fail: bool) {
-        self.fail_on_write = should_fail;
-    }
-
-    fn set_block_failure(&mut self, block_id: u32) {
-        self.fail_on_specific_block = Some(block_id);
-    }
-
-    fn set_byte_limit_failure(&mut self, limit: usize) {
-        self.fail_after_bytes = Some(limit);
-    }
-
-    fn reset_failures(&mut self) {
-        self.fail_on_open = false;
-        self.fail_on_close = false;
-        self.fail_on_read = false;
-        self.fail_on_write = false;
-        self.fail_on_specific_block = None;
-        self.fail_after_bytes = None;
-        self.bytes_written = 0;
     }
 }
 
@@ -153,7 +119,7 @@ mod error_handling_tests {
     /// 测试块设备错误处理
     #[test]
     fn test_block_device_errors() {
-        let mut device = ErrorMockDevice::new(100 * 1024 * 1024); // 100MB
+        let device = ErrorMockDevice::new(100 * 1024 * 1024); // 100MB
         let mut jbd2_dev = Jbd2Dev::initial_jbd2dev(0, device, true);
 
         mkfs(&mut jbd2_dev).expect("mkfs failed");
@@ -207,7 +173,7 @@ mod error_handling_tests {
 
         // 测试文件名长度边界
         let long_name = "a".repeat(rsext4::DIRNAME_LEN);
-        let result = mkfile(
+        let _ = mkfile(
             &mut jbd2_dev,
             &mut fs,
             &format!("/boundary/{}.txt", long_name),
@@ -252,12 +218,12 @@ mod error_handling_tests {
 
         // 测试连续多个斜杠
         // 注意：rsext4可能规范化路径，所以连续斜杠可能被处理
-        let result = mkdir(&mut jbd2_dev, &mut fs, "//invalid//path//");
+        let _ = mkdir(&mut jbd2_dev, &mut fs, "//invalid//path//");
         // 跳过断言，因为行为可能与预期不同
 
         // 测试路径中包含非法字符（如果有限制）
         // 注意：ext4 对文件名中的字符限制较少，主要是不能包含 '/' 和 '\0'
-        let result = mkdir(&mut jbd2_dev, &mut fs, "/path/with\0null");
+        let _ = mkdir(&mut jbd2_dev, &mut fs, "/path/with\0null");
         // 跳过断言，因为行为可能与预期不同
 
         umount(fs, &mut jbd2_dev).expect("umount failed");

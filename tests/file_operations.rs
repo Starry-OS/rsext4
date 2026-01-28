@@ -22,14 +22,6 @@ impl MockBlockDevice {
             fail_on_read: false,
         }
     }
-
-    fn set_write_failure(&mut self, should_fail: bool) {
-        self.fail_on_write = should_fail;
-    }
-
-    fn set_read_failure(&mut self, should_fail: bool) {
-        self.fail_on_read = should_fail;
-    }
 }
 
 impl BlockDevice for MockBlockDevice {

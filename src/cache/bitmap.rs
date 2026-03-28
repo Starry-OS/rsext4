@@ -1,13 +1,16 @@
 //! Bitmap cache helpers.
 
-use crate::BITMAP_CACHE_MAX;
-use crate::blockdev::*;
-use crate::bmalloc::{AbsoluteBN, BGIndex};
-use crate::config::USE_MULTILEVEL_CACHE;
-use crate::error::*;
-use alloc::collections::BTreeMap;
-use alloc::vec::Vec;
+use alloc::{collections::BTreeMap, vec::Vec};
+
 use log::debug;
+
+use crate::{
+    BITMAP_CACHE_MAX,
+    blockdev::*,
+    bmalloc::{AbsoluteBN, BGIndex},
+    config::USE_MULTILEVEL_CACHE,
+    error::*,
+};
 
 /// Type of bitmap stored in the cache.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -183,7 +186,8 @@ impl BitmapCache {
     {
         let bitmap = self.get_or_load_mut(block_dev, key, block_num)?;
         debug!(
-            "BitmapCache::modify: key=({}:{:?}) block_num={} before_dirty={} (will apply in-memory changes)",
+            "BitmapCache::modify: key=({}:{:?}) block_num={} before_dirty={} (will apply \
+             in-memory changes)",
             key.group_id, key.bitmap_type, block_num, bitmap.dirty
         );
 
@@ -196,7 +200,8 @@ impl BitmapCache {
         }
 
         debug!(
-            "BitmapCache::modify: key=({}:{:?}) block_num={} marked_dirty=true (bitmap updated in cache, writeback deferred)",
+            "BitmapCache::modify: key=({}:{:?}) block_num={} marked_dirty=true (bitmap updated in \
+             cache, writeback deferred)",
             key.group_id, key.bitmap_type, block_num
         );
         Ok(())
@@ -329,8 +334,9 @@ pub struct CacheStats {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use alloc::vec;
+
+    use super::*;
 
     #[test]
     fn test_cache_key() {

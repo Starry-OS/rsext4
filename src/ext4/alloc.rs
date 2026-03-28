@@ -28,7 +28,8 @@ impl Ext4FileSystem {
             let mut alloc_res: Result<BlockAlloc, Ext4Error> = Err(Ext4Error::no_space());
 
             debug!(
-                "alloc_blocks: candidate group={group_idx} bitmap_block={bitmap_block} starting contiguous allocation of {count} blocks"
+                "alloc_blocks: candidate group={group_idx} bitmap_block={bitmap_block} starting \
+                 contiguous allocation of {count} blocks"
             );
 
             if ext4_superblock_has_metadata_csum(&self.superblock) && !desc.is_block_bitmap_uninit()
@@ -42,7 +43,8 @@ impl Ext4FileSystem {
                 let stored = desc.block_bitmap_csum();
                 if expected != stored {
                     error!(
-                        "alloc_blocks: block bitmap checksum mismatch group={group_idx} expected={expected:#x} stored={stored:#x}"
+                        "alloc_blocks: block bitmap checksum mismatch group={group_idx} \
+                         expected={expected:#x} stored={stored:#x}"
                     );
                     return Err(Ext4Error::checksum());
                 }
@@ -81,7 +83,8 @@ impl Ext4FileSystem {
                 desc_mut.bg_flags &= !Ext4GroupDesc::EXT4_BG_BLOCK_UNINIT;
 
                 debug!(
-                    "alloc_blocks: group={} free_blocks_count change {} -> {} (allocated {} blocks starting at global={})",
+                    "alloc_blocks: group={} free_blocks_count change {} -> {} (allocated {} \
+                     blocks starting at global={})",
                     group_idx, before, new_count, count, alloc.global_block
                 );
             }
@@ -93,7 +96,8 @@ impl Ext4FileSystem {
             self.superblock.s_free_blocks_count_hi = (sb_after >> 32) as u32;
 
             debug!(
-                "alloc_blocks: superblock free_blocks_count change {sb_before} -> {sb_after} (delta=-{count})"
+                "alloc_blocks: superblock free_blocks_count change {sb_before} -> {sb_after} \
+                 (delta=-{count})"
             );
 
             let mut blocks = Vec::with_capacity(count as usize);
@@ -102,7 +106,8 @@ impl Ext4FileSystem {
             }
 
             debug!(
-                "Allocated blocks: group={}, first_block_in_group={}, first_global_block={}, count={} [bitmap updated, writeback deferred]",
+                "Allocated blocks: group={}, first_block_in_group={}, first_global_block={}, \
+                 count={} [bitmap updated, writeback deferred]",
                 alloc.group_idx, alloc.block_in_group, alloc.global_block, count
             );
 

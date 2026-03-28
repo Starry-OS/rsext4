@@ -1,6 +1,6 @@
-use crate::bmalloc::InodeNumber;
-use crate::disknode::Ext4Inode;
 use alloc::string::String;
+
+use crate::{bmalloc::InodeNumber, disknode::Ext4Inode};
 
 /// Open file state tracked by the high-level API.
 pub struct OpenFile {

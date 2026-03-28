@@ -1,9 +1,7 @@
 //! Block and inode bitmap checksum helpers.
 
-use crate::crc32c::ext4_crc32c_seed_from_superblock;
-use crate::superblock::Ext4Superblock;
-
 use super::core::ext4_metadata_csum32;
+use crate::{crc32c::ext4_crc32c_seed_from_superblock, superblock::Ext4Superblock};
 
 /// Computes the checksum stored for a block bitmap.
 pub fn ext4_block_bitmap_csum32(sb: &Ext4Superblock, bitmap_bytes: &[u8]) -> u32 {

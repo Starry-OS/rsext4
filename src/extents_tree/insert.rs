@@ -1,5 +1,4 @@
-use super::split::SplitInfo;
-use super::*;
+use super::{split::SplitInfo, *};
 
 impl<'a> ExtentTree<'a> {
     /// Inserts a new extent into the inode's extent tree.
@@ -24,7 +23,8 @@ impl<'a> ExtentTree<'a> {
         match &root {
             ExtentNode::Leaf { header, entries } => {
                 debug!(
-                    "ExtentTree::insert_extent: current root=LEAF depth={} entries={} max={} first_extents={:?}",
+                    "ExtentTree::insert_extent: current root=LEAF depth={} entries={} max={} \
+                     first_extents={:?}",
                     header.eh_depth,
                     header.eh_entries,
                     header.eh_max,
@@ -37,7 +37,8 @@ impl<'a> ExtentTree<'a> {
             }
             ExtentNode::Index { header, entries } => {
                 debug!(
-                    "ExtentTree::insert_extent: current root=INDEX depth={} entries={} max={} first_indexes={:?}",
+                    "ExtentTree::insert_extent: current root=INDEX depth={} entries={} max={} \
+                     first_indexes={:?}",
                     header.eh_depth,
                     header.eh_entries,
                     header.eh_max,
@@ -71,7 +72,8 @@ impl<'a> ExtentTree<'a> {
                 let new_left_block = fs.alloc_block(block_dev)?;
                 self.add_inode_sectors_for_block();
                 debug!(
-                    "ExtentTree::insert_extent: root split occurred, new_left_block={} split_info={{start_block={}, phy_block={}}}",
+                    "ExtentTree::insert_extent: root split occurred, new_left_block={} \
+                     split_info={{start_block={}, phy_block={}}}",
                     new_left_block, split_info.start_block, split_info.phy_block
                 );
 
@@ -132,7 +134,8 @@ impl<'a> ExtentTree<'a> {
         match node {
             ExtentNode::Leaf { header, entries } => {
                 debug!(
-                    "insert_recursive: LEAF depth={} entries_before={} max={} new_ext=(lbn={}, len={}, phys_start={}) phy_block={:?}",
+                    "insert_recursive: LEAF depth={} entries_before={} max={} new_ext=(lbn={}, \
+                     len={}, phys_start={}) phy_block={:?}",
                     header.eh_depth,
                     header.eh_entries,
                     header.eh_max,
@@ -171,7 +174,8 @@ impl<'a> ExtentTree<'a> {
                                 if total <= MAX_LEN {
                                     prev.ee_len = (total as u16 & 0x7FFF) | hi_flag;
                                     debug!(
-                                        "insert_recursive: merged with previous extent -> new_len={total} (no split yet)"
+                                        "insert_recursive: merged with previous extent -> \
+                                         new_len={total} (no split yet)"
                                     );
 
                                     if entries.len() <= header.eh_max as usize {
@@ -211,7 +215,9 @@ impl<'a> ExtentTree<'a> {
                                         entries.insert(insert_pos, tail);
                                         header.eh_entries = entries.len() as u16;
                                         debug!(
-                                            "insert_recursive: previous extent saturated MAX_LEN, inserted tail extent (lbn={}, len={}, phys_start={}) now entries_len={}",
+                                            "insert_recursive: previous extent saturated MAX_LEN, \
+                                             inserted tail extent (lbn={}, len={}, phys_start={}) \
+                                             now entries_len={}",
                                             tail.ee_block,
                                             tail.ee_len & 0x7FFF,
                                             tail.start_block(),
@@ -243,7 +249,8 @@ impl<'a> ExtentTree<'a> {
                 entries.insert(pos, new_ext);
                 header.eh_entries = entries.len() as u16;
                 debug!(
-                    "insert_recursive: after insert (no split yet) leaf entries_len={} (max={}) first_extents={:?}",
+                    "insert_recursive: after insert (no split yet) leaf entries_len={} (max={}) \
+                     first_extents={:?}",
                     header.eh_entries,
                     header.eh_max,
                     entries
@@ -326,7 +333,8 @@ impl<'a> ExtentTree<'a> {
 
             ExtentNode::Index { header, entries } => {
                 debug!(
-                    "insert_recursive: INDEX depth={} entries_before={} max={} new_ext=(lbn={}, len={}, phys_start={}) phy_block={:?}",
+                    "insert_recursive: INDEX depth={} entries_before={} max={} new_ext=(lbn={}, \
+                     len={}, phys_start={}) phy_block={:?}",
                     header.eh_depth,
                     header.eh_entries,
                     header.eh_max,
@@ -399,7 +407,8 @@ impl<'a> ExtentTree<'a> {
                     let right_entries = entries.split_off(split_idx);
                     header.eh_entries = entries.len() as u16;
                     debug!(
-                        "insert_recursive: index split at idx={} -> left_entries={} right_entries={}",
+                        "insert_recursive: index split at idx={} -> left_entries={} \
+                         right_entries={}",
                         split_idx,
                         header.eh_entries,
                         right_entries.len()
@@ -409,7 +418,8 @@ impl<'a> ExtentTree<'a> {
                     let new_phy_block = fs.alloc_block(block_dev)?;
                     self.add_inode_sectors_for_block();
                     debug!(
-                        "insert_recursive: allocated new block for right index node: {new_phy_block}"
+                        "insert_recursive: allocated new block for right index node: \
+                         {new_phy_block}"
                     );
 
                     let right_header = Ext4ExtentHeader {
@@ -448,7 +458,7 @@ impl<'a> ExtentTree<'a> {
                     Ok(Some(SplitInfo {
                         start_block: split_key,
                         phy_block: new_phy_block,
-                }))
+                    }))
                 } else {
                     Ok(None)
                 }

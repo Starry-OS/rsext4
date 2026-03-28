@@ -615,15 +615,17 @@ impl<'a> ExtentTree<'a> {
 mod tests {
     extern crate std;
 
-    use super::*;
-    use crate::blockdev::{BlockDevice, Jbd2Dev};
-    use crate::bmalloc::AbsoluteBN;
-    use crate::cache::bitmap::CacheKey;
-    use crate::error::{Ext4Error, Ext4Result};
-    use crate::ext4::{mkfs, mount};
-    use alloc::vec;
-    use alloc::vec::Vec;
+    use alloc::{vec, vec::Vec};
     use core::cell::Cell;
+
+    use super::*;
+    use crate::{
+        blockdev::{BlockDevice, Jbd2Dev},
+        bmalloc::AbsoluteBN,
+        cache::bitmap::CacheKey,
+        error::{Ext4Error, Ext4Result},
+        ext4::{mkfs, mount},
+    };
 
     struct MemBlockDev {
         data: Vec<u8>,

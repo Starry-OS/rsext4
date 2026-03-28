@@ -1,8 +1,7 @@
 //! Disk encoding helpers for block group descriptors.
 
-use crate::endian::{DiskFormat, read_u16_le, read_u32_le, write_u16_le, write_u32_le};
-
 use super::desc::Ext4GroupDesc;
+use crate::endian::{DiskFormat, read_u16_le, read_u32_le, write_u16_le, write_u32_le};
 
 impl DiskFormat for Ext4GroupDesc {
     fn from_disk_bytes(bytes: &[u8]) -> Self {

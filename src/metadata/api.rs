@@ -1,12 +1,13 @@
 //! Public path-based metadata APIs.
 
-use crate::blockdev::{BlockDevice, Jbd2Dev};
-use crate::dir::{get_inode_with_num, split_paren_child_and_tranlatevalid};
-use crate::disknode::Ext4TimeSpec;
-use crate::error::{Ext4Error, Ext4Result};
-use crate::ext4::Ext4FileSystem;
-
 use super::Ext4InodeMetadataUpdate;
+use crate::{
+    blockdev::{BlockDevice, Jbd2Dev},
+    dir::{get_inode_with_num, split_paren_child_and_tranlatevalid},
+    disknode::Ext4TimeSpec,
+    error::{Ext4Error, Ext4Result},
+    ext4::Ext4FileSystem,
+};
 
 /// Updates the permission bits of the inode referenced by `path`.
 pub fn chmod<B: BlockDevice>(

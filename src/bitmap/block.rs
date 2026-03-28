@@ -1,7 +1,8 @@
 //! Block bitmap wrappers.
 
-use crate::bitmap::BitmapError;
 use log::error;
+
+use crate::bitmap::BitmapError;
 
 /// Block bitmap view with allocation helpers.
 #[derive(Debug)]
@@ -170,8 +171,9 @@ impl<'a> BlockBitmap<'a> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use alloc::vec;
+
+    use super::*;
 
     #[test]
     fn test_block_bitmap_basic() {

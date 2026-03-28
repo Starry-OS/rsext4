@@ -1,13 +1,14 @@
 //! Filesystem-side metadata application helpers.
 
-use crate::blockdev::{BlockDevice, Jbd2Dev};
-use crate::bmalloc::InodeNumber;
-use crate::disknode::{Ext4Inode, Ext4TimeSpec};
-use crate::error::{Ext4Error, Ext4Result};
-use crate::ext4::Ext4FileSystem;
-use crate::superblock::Ext4Superblock;
-
 use super::{Ext4DtimeUpdate, Ext4InodeMetadataUpdate, Ext4MetadataReason};
+use crate::{
+    blockdev::{BlockDevice, Jbd2Dev},
+    bmalloc::InodeNumber,
+    disknode::{Ext4Inode, Ext4TimeSpec},
+    error::{Ext4Error, Ext4Result},
+    ext4::Ext4FileSystem,
+    superblock::Ext4Superblock,
+};
 
 impl Ext4FileSystem {
     pub(crate) fn finalize_inode_update<B: BlockDevice>(

@@ -6,19 +6,23 @@
 //! File payload blocks themselves are not covered because this implementation
 //! does not currently expose a data-block CRC feature.
 
-use std::cell::{Cell, RefCell};
-use std::rc::Rc;
-
-use rsext4::blockgroup_description::Ext4GroupDesc;
-use rsext4::bmalloc::AbsoluteBN;
-use rsext4::checksum::{
-    ext4_block_bitmap_csum32, ext4_group_desc_csum16, ext4_inode_bitmap_csum32,
-    ext4_superblock_csum32,
+use std::{
+    cell::{Cell, RefCell},
+    rc::Rc,
 };
-use rsext4::endian::DiskFormat;
-use rsext4::error::{Errno, Ext4Error, Ext4Result};
-use rsext4::superblock::Ext4Superblock;
-use rsext4::*;
+
+use rsext4::{
+    blockgroup_description::Ext4GroupDesc,
+    bmalloc::AbsoluteBN,
+    checksum::{
+        ext4_block_bitmap_csum32, ext4_group_desc_csum16, ext4_inode_bitmap_csum32,
+        ext4_superblock_csum32,
+    },
+    endian::DiskFormat,
+    error::{Errno, Ext4Error, Ext4Result},
+    superblock::Ext4Superblock,
+    *,
+};
 
 /// Shared in-memory block device so tests can remount the same disk image and
 /// corrupt raw metadata bytes between mounts without relying on private APIs.

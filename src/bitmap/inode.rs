@@ -1,7 +1,8 @@
 //! Inode bitmap wrappers.
 
-use crate::bitmap::BitmapError;
 use log::warn;
+
+use crate::bitmap::BitmapError;
 
 /// Inode bitmap view with allocation helpers.
 #[derive(Debug)]
@@ -121,8 +122,9 @@ impl<'a> InodeBitmap<'a> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use alloc::vec;
+
+    use super::*;
 
     #[test]
     fn test_inode_bitmap_basic() {

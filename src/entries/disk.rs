@@ -1,8 +1,7 @@
 //! Disk serialization for directory entry headers.
 
 use super::{Ext4DirEntry2, Ext4DirEntryTail};
-use crate::config::*;
-use crate::endian::*;
+use crate::{config::*, endian::*};
 
 impl DiskFormat for Ext4DirEntry2 {
     fn from_disk_bytes(bytes: &[u8]) -> Self {

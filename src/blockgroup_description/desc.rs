@@ -2,11 +2,13 @@
 
 use log::error;
 
-use crate::checksum::{ext4_block_bitmap_csum32, ext4_group_desc_csum16, ext4_inode_bitmap_csum32};
-use crate::crc32c::crc32c::ext4_superblock_has_metadata_csum;
-use crate::endian::DiskFormat;
-use crate::error::{Ext4Error, Ext4Result};
-use crate::superblock::Ext4Superblock;
+use crate::{
+    checksum::{ext4_block_bitmap_csum32, ext4_group_desc_csum16, ext4_inode_bitmap_csum32},
+    crc32c::crc32c::ext4_superblock_has_metadata_csum,
+    endian::DiskFormat,
+    error::{Ext4Error, Ext4Result},
+    superblock::Ext4Superblock,
+};
 
 /// On-disk ext4 block group descriptor.
 #[repr(C)]

@@ -1,8 +1,7 @@
 //! Block group statistics helpers.
 
-use crate::bmalloc::BGIndex;
-
 use super::desc::Ext4GroupDesc;
+use crate::bmalloc::BGIndex;
 
 /// Derived statistics for one block group descriptor.
 #[derive(Debug, Clone, Copy)]

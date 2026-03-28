@@ -167,8 +167,9 @@ impl BlockAllocator {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use alloc::vec;
+
+    use super::*;
 
     #[test]
     fn test_block_allocator_single() {

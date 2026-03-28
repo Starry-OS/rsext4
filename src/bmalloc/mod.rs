@@ -2,10 +2,12 @@
 
 use core::fmt;
 
-use crate::bitmap::*;
-use crate::blockgroup_description::*;
-use crate::error::{Errno, Ext4Error, Ext4Result};
-use crate::superblock::*;
+use crate::{
+    bitmap::*,
+    blockgroup_description::*,
+    error::{Errno, Ext4Error, Ext4Result},
+    superblock::*,
+};
 
 mod block;
 mod error;

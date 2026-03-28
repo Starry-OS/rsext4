@@ -1,23 +1,23 @@
 //! JBD2 transaction commit and replay logic.
 
-use crate::blockdev::*;
-use crate::bmalloc::{AbsoluteBN, InodeNumber};
-use crate::config::*;
-use crate::crc32c::crc32c::ext4_superblock_has_metadata_csum;
-use crate::disknode::*;
-use crate::endian::*;
-use crate::error::*;
-use crate::ext4::*;
-use crate::file::*;
-use crate::jbd2::jbdstruct::*;
-use crate::loopfile::*;
-use crate::metadata::Ext4InodeMetadataUpdate;
-use alloc::vec;
-use log::debug;
-use log::info;
-use log::warn;
+use alloc::{vec, vec::Vec};
 
-use alloc::vec::Vec;
+use log::{debug, info, warn};
+
+use crate::{
+    blockdev::*,
+    bmalloc::{AbsoluteBN, InodeNumber},
+    config::*,
+    crc32c::crc32c::ext4_superblock_has_metadata_csum,
+    disknode::*,
+    endian::*,
+    error::*,
+    ext4::*,
+    file::*,
+    jbd2::jbdstruct::*,
+    loopfile::*,
+    metadata::Ext4InodeMetadataUpdate,
+};
 
 impl JBD2DEVSYSTEM {
     /// Returns the next writable journal block, handling wrap-around.
@@ -70,7 +70,8 @@ impl JBD2DEVSYSTEM {
     pub fn commit_transaction<B: BlockDevice>(&mut self, block_dev: &mut B) -> Ext4Result<bool> {
         let tid = self.sequence;
         debug!(
-            "[JBD2 commit] begin: tid={} updates_len={} head={} start_block={} max_len={} seq_in_superblock={} s_start={}",
+            "[JBD2 commit] begin: tid={} updates_len={} head={} start_block={} max_len={} \
+             seq_in_superblock={} s_start={}",
             tid,
             self.commit_queue.len(),
             self.head,
@@ -143,7 +144,8 @@ impl JBD2DEVSYSTEM {
         for (idx, up) in no_escape.iter().enumerate() {
             let metadata_journal_block_id = self.set_next_log_block(block_dev)?;
             debug!(
-                "[JBD2 commit] tid={} meta_idx={} journal_block_id={} (absolute) target_phys_block={}",
+                "[JBD2 commit] tid={} meta_idx={} journal_block_id={} (absolute) \
+                 target_phys_block={}",
                 tid, idx, metadata_journal_block_id, up.0
             );
             block_dev.write(&up.1, metadata_journal_block_id, 1)?;
@@ -202,7 +204,8 @@ impl JBD2DEVSYSTEM {
         }
 
         debug!(
-            "[JBD2 replay] begin: journal_sb_phys={} first_rel={} last_rel={} s_start(rel)={} maxlen={} expect_seq={}",
+            "[JBD2 replay] begin: journal_sb_phys={} first_rel={} last_rel={} s_start(rel)={} \
+             maxlen={} expect_seq={}",
             self.start_block, first_rel, last_rel, journal_rel, maxlen, expect_seq,
         );
 
@@ -224,14 +227,16 @@ impl JBD2DEVSYSTEM {
             };
             if let Err(e) = block_dev.read(&mut desc_buf, desc_phys, 1) {
                 debug!(
-                    "[JBD2 replay] read descriptor failed at rel_block={journal_rel} phys_block={desc_phys} err={e:?}"
+                    "[JBD2 replay] read descriptor failed at rel_block={journal_rel} \
+                     phys_block={desc_phys} err={e:?}"
                 );
                 break;
             }
 
             let hdr = JournalHeaderS::from_disk_bytes(&desc_buf[0..12]);
             debug!(
-                "[JBD2 replay] descriptor: phys_block={} h_magic=0x{:x} h_blocktype={} h_sequence={} expect_seq={}",
+                "[JBD2 replay] descriptor: phys_block={} h_magic=0x{:x} h_blocktype={} \
+                 h_sequence={} expect_seq={}",
                 desc_phys, hdr.h_magic, hdr.h_blocktype, hdr.h_sequence, expect_seq
             );
             if hdr.h_magic != JBD2_MAGIC || hdr.h_blocktype != 1 {
@@ -288,12 +293,14 @@ impl JBD2DEVSYSTEM {
                 let mut mbuf = [0u8; BLOCK_SIZE];
                 if let Err(e) = block_dev.read(&mut mbuf, meta_phys, 1) {
                     debug!(
-                        "[JBD2 replay] read meta block failed: idx={idx} rel_block={journal_rel} phys_block={meta_phys} err={e:?}"
+                        "[JBD2 replay] read meta block failed: idx={idx} rel_block={journal_rel} \
+                         phys_block={meta_phys} err={e:?}"
                     );
                     return;
                 }
                 debug!(
-                    "[JBD2 replay] tid={expect_seq} loaded meta_idx={idx} from rel_block={journal_rel} phys_block={meta_phys}"
+                    "[JBD2 replay] tid={expect_seq} loaded meta_idx={idx} from \
+                     rel_block={journal_rel} phys_block={meta_phys}"
                 );
                 meta_blocks.push(mbuf);
             }
@@ -308,13 +315,15 @@ impl JBD2DEVSYSTEM {
             let mut cbuf = [0u8; BLOCK_SIZE];
             if let Err(e) = block_dev.read(&mut cbuf, commit_phys, 1) {
                 debug!(
-                    "[JBD2 replay] read commit failed at rel_block={commit_rel} phys_block={commit_phys} err={e:?}"
+                    "[JBD2 replay] read commit failed at rel_block={commit_rel} \
+                     phys_block={commit_phys} err={e:?}"
                 );
                 return;
             }
             let chdr = JournalHeaderS::from_disk_bytes(&cbuf[0..12]);
             debug!(
-                "[JBD2 replay] commit: rel_block={} phys_block={} h_magic=0x{:x} h_blocktype={} h_sequence={} expect_seq={}",
+                "[JBD2 replay] commit: rel_block={} phys_block={} h_magic=0x{:x} h_blocktype={} \
+                 h_sequence={} expect_seq={}",
                 commit_rel,
                 commit_phys,
                 chdr.h_magic,
@@ -343,7 +352,8 @@ impl JBD2DEVSYSTEM {
                     debug!("Restored JBD2 Magic for block {phys}");
                 }
                 debug!(
-                    "[JBD2 replay] tid={expect_seq} apply meta_idx={i} to phys_block={phys} (journal data from idx={i})"
+                    "[JBD2 replay] tid={expect_seq} apply meta_idx={i} to phys_block={phys} \
+                     (journal data from idx={i})"
                 );
 
                 let _ = block_dev.write(data, phys, 1);

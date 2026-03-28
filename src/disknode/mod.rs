@@ -1,7 +1,8 @@
 //! On-disk inode, extent, and timestamp types.
 
-use crate::endian::*;
 use log::debug;
+
+use crate::endian::*;
 
 mod disk_format;
 mod extent;

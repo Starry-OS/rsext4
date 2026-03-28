@@ -1,8 +1,6 @@
 //! Public block device traits.
 
-use crate::bmalloc::AbsoluteBN;
-use crate::disknode::Ext4Timestamp;
-use crate::error::Ext4Result;
+use crate::{bmalloc::AbsoluteBN, disknode::Ext4Timestamp, error::Ext4Result};
 
 /// Marker trait for call sites that are expected to trigger block device writes.
 pub trait INeedBlockdevToWrite {}

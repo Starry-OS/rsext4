@@ -1,10 +1,8 @@
-use crate::bmalloc::InodeNumber;
-use crate::entries::Ext4DirEntryTail;
-use crate::error::Errno;
-use crate::superblock::Ext4Superblock;
-use crate::{BLOCK_SIZE, disknode::Ext4Inode, endian::DiskFormat};
-
 use super::*;
+use crate::{
+    BLOCK_SIZE, bmalloc::InodeNumber, disknode::Ext4Inode, endian::DiskFormat,
+    entries::Ext4DirEntryTail, error::Errno, superblock::Ext4Superblock,
+};
 
 fn metadata_csum_superblock() -> Ext4Superblock {
     let mut sb = Ext4Superblock::default();

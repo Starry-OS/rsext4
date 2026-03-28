@@ -1,5 +1,4 @@
-use super::mkfs::read_superblock;
-use super::*;
+use super::{mkfs::read_superblock, *};
 
 impl Ext4FileSystem {
     /// Creates the root directory tree during bootstrap.
@@ -85,7 +84,8 @@ impl Ext4FileSystem {
             let root_inode = fs.get_root(block_dev).map_err(|_| Ext4Error::io())?;
             if root_inode.i_mode == 0 || !root_inode.is_dir() {
                 warn!(
-                    "Root inode is uninitialized or not a directory, creating root and lost+found... i_mode: {}, is_dir: {}",
+                    "Root inode is uninitialized or not a directory, creating root and \
+                     lost+found... i_mode: {}, is_dir: {}",
                     root_inode.i_mode,
                     root_inode.is_dir()
                 );
@@ -203,7 +203,8 @@ impl Ext4FileSystem {
                     let stored_inode = g0.inode_bitmap_csum();
                     if expected_inode != stored_inode {
                         error!(
-                            "Inode bitmap checksum mismatch group=0 expected={expected_inode:#x} stored={stored_inode:#x}"
+                            "Inode bitmap checksum mismatch group=0 expected={expected_inode:#x} \
+                             stored={stored_inode:#x}"
                         );
                         return Err(Ext4Error::checksum());
                     }
@@ -215,7 +216,8 @@ impl Ext4FileSystem {
                     let stored_block = g0.block_bitmap_csum();
                     if expected_block != stored_block {
                         error!(
-                            "Block bitmap checksum mismatch group=0 expected={expected_block:#x} stored={stored_block:#x}"
+                            "Block bitmap checksum mismatch group=0 expected={expected_block:#x} \
+                             stored={stored_block:#x}"
                         );
                         return Err(Ext4Error::checksum());
                     }

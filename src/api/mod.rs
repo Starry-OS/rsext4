@@ -1,14 +1,8 @@
 //! High-level filesystem API exports.
 
-use crate::BLOCK_SIZE;
-use crate::blockdev::*;
-use crate::dir::*;
-use crate::error::*;
-use crate::ext4::*;
-use crate::file::*;
-use crate::loopfile::*;
-use crate::*;
 use alloc::vec::Vec;
+
+use crate::{BLOCK_SIZE, blockdev::*, dir::*, error::*, ext4::*, file::*, loopfile::*, *};
 
 mod file_handle;
 mod fs;

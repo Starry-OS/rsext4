@@ -41,15 +41,15 @@ pub struct Ext4Inode {
     pub l_i_reserved: u16,      // Reserved Linux field.
 
     // 0x80: extra inode area present in large inodes.
-    pub i_extra_isize: u16,  // Size of the extra inode payload beyond 128 bytes.
-    pub i_checksum_hi: u16,  // High 16 bits of the inode checksum.
-    pub i_ctime_extra: u32,  // ctime nanoseconds plus upper epoch bits.
-    pub i_mtime_extra: u32,  // mtime nanoseconds plus upper epoch bits.
-    pub i_atime_extra: u32,  // atime nanoseconds plus upper epoch bits.
-    pub i_crtime: u32,       // Creation time in seconds.
+    pub i_extra_isize: u16, // Size of the extra inode payload beyond 128 bytes.
+    pub i_checksum_hi: u16, // High 16 bits of the inode checksum.
+    pub i_ctime_extra: u32, // ctime nanoseconds plus upper epoch bits.
+    pub i_mtime_extra: u32, // mtime nanoseconds plus upper epoch bits.
+    pub i_atime_extra: u32, // atime nanoseconds plus upper epoch bits.
+    pub i_crtime: u32,      // Creation time in seconds.
     pub i_crtime_extra: u32, // crtime nanoseconds plus upper epoch bits.
-    pub i_version_hi: u32,   // High 32 bits of the inode version.
-    pub i_projid: u32,       // Project ID.
+    pub i_version_hi: u32,  // High 32 bits of the inode version.
+    pub i_projid: u32,      // Project ID.
 }
 
 impl Ext4Inode {
@@ -206,7 +206,7 @@ impl Ext4Inode {
         }
     }
 
-    //some metadata change support
+    // some metadata change support
     pub fn set_mtime(&mut self, mtime: u32) {
         self.i_mtime = mtime;
     }

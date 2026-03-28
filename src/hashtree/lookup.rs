@@ -1,18 +1,20 @@
 //! Hash tree lookup flow and fallback logic.
 
 use alloc::vec::Vec;
-use log::{debug, error, warn};
 
-use crate::blockdev::{BlockDevice, Jbd2Dev};
-use crate::bmalloc::AbsoluteBN;
-use crate::config::BLOCK_SIZE;
-use crate::disknode::Ext4Inode;
-use crate::entries::{DirEntryIterator, Ext4DirEntryInfo, Ext4DxEntry, classic_dir, htree_dir};
-use crate::ext4::Ext4FileSystem;
-use crate::loopfile::{resolve_inode_block, resolve_inode_block_allextend};
+use log::{debug, error, warn};
 
 use super::{
     Ext4InodeHashTreeExt, HashTreeError, HashTreeManager, HashTreeNode, HashTreeSearchResult,
+};
+use crate::{
+    blockdev::{BlockDevice, Jbd2Dev},
+    bmalloc::AbsoluteBN,
+    config::BLOCK_SIZE,
+    disknode::Ext4Inode,
+    entries::{DirEntryIterator, Ext4DirEntryInfo, Ext4DxEntry, classic_dir, htree_dir},
+    ext4::Ext4FileSystem,
+    loopfile::{resolve_inode_block, resolve_inode_block_allextend},
 };
 
 pub(super) fn lookup<B: BlockDevice>(

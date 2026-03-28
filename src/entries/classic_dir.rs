@@ -1,7 +1,8 @@
 //! Helpers for classic linear directory blocks.
 
-use super::{DirEntryIterator, Ext4DirEntryInfo};
 use alloc::vec::Vec;
+
+use super::{DirEntryIterator, Ext4DirEntryInfo};
 
 /// Finds an entry by name in a linear directory block.
 pub fn find_entry<'a>(block_data: &'a [u8], target_name: &[u8]) -> Option<Ext4DirEntryInfo<'a>> {

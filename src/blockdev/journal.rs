@@ -1,16 +1,17 @@
 //! JBD2-aware block device facade.
 
-use alloc::boxed::Box;
-use alloc::vec::Vec;
+use alloc::{boxed::Box, vec::Vec};
+
 use log::{error, trace, warn};
 
-use super::cached_device::BlockDev;
-use super::traits::BlockDevice;
-use crate::bmalloc::AbsoluteBN;
-use crate::config::{BLOCK_SIZE, JBD2_BUFFER_MAX};
-use crate::disknode::Ext4Timestamp;
-use crate::error::Ext4Result;
-use crate::jbd2::jbdstruct::{JBD2DEVSYSTEM, Jbd2Update, JournalSuperBllockS};
+use super::{cached_device::BlockDev, traits::BlockDevice};
+use crate::{
+    bmalloc::AbsoluteBN,
+    config::{BLOCK_SIZE, JBD2_BUFFER_MAX},
+    disknode::Ext4Timestamp,
+    error::Ext4Result,
+    jbd2::jbdstruct::{JBD2DEVSYSTEM, Jbd2Update, JournalSuperBllockS},
+};
 
 /// Runtime state of the journal proxy.
 pub enum Jbd2RunState {

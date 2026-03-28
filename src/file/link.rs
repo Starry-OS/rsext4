@@ -1,5 +1,4 @@
-use super::delete::remove_inodeentry_from_parentdir;
-use super::*;
+use super::{delete::remove_inodeentry_from_parentdir, *};
 
 /// Create a hard link.
 pub fn link<B: BlockDevice>(

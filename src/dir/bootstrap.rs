@@ -1,20 +1,13 @@
 //! Root directory bootstrap helpers.
 
-use crate::blockdev::*;
-use crate::bmalloc::BGIndex;
-use crate::checksum::update_ext4_dirblock_csum32;
-use crate::config::*;
-use crate::crc32c::ext4_superblock_has_metadata_csum;
-use crate::dir::insert_dir_entry;
-use crate::disknode::*;
-use crate::endian::DiskFormat;
-use crate::entries::*;
-use crate::error::*;
-use crate::ext4::*;
-use crate::file::*;
-use crate::metadata::Ext4InodeMetadataUpdate;
-use crate::superblock::Ext4Superblock;
 use log::debug;
+
+use crate::{
+    blockdev::*, bmalloc::BGIndex, checksum::update_ext4_dirblock_csum32, config::*,
+    crc32c::ext4_superblock_has_metadata_csum, dir::insert_dir_entry, disknode::*,
+    endian::DiskFormat, entries::*, error::*, ext4::*, file::*, metadata::Ext4InodeMetadataUpdate,
+    superblock::Ext4Superblock,
+};
 
 /// Creates the root directory contents and inode.
 ///

@@ -5,10 +5,12 @@
 
 use std::cell::Cell;
 
-use rsext4::bmalloc::AbsoluteBN;
-use rsext4::disknode::Ext4Inode;
-use rsext4::error::{Ext4Error, Ext4Result};
-use rsext4::*;
+use rsext4::{
+    bmalloc::AbsoluteBN,
+    disknode::Ext4Inode,
+    error::{Ext4Error, Ext4Result},
+    *,
+};
 
 fn test_mkdir<B: BlockDevice>(
     device: &mut Jbd2Dev<B>,

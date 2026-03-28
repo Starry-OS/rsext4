@@ -1,5 +1,4 @@
-use super::mkfs::write_superblock;
-use super::*;
+use super::{mkfs::write_superblock, *};
 
 impl Ext4FileSystem {
     /// Flushes all filesystem metadata and caches to the backing device.
@@ -43,7 +42,8 @@ impl Ext4FileSystem {
         let block_size_u64 = BLOCK_SIZE as u64;
 
         debug!(
-            "Writing back group descriptors: {total_desc_count} descriptors, desc_size = {desc_size} bytes"
+            "Writing back group descriptors: {total_desc_count} descriptors, desc_size = \
+             {desc_size} bytes"
         );
 
         let mut current_block: Option<AbsoluteBN> = None;

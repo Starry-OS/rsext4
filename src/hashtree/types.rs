@@ -2,8 +2,10 @@
 
 use alloc::vec::Vec;
 
-use crate::bmalloc::AbsoluteBN;
-use crate::entries::{Ext4DirEntryInfo, Ext4DxEntry};
+use crate::{
+    bmalloc::AbsoluteBN,
+    entries::{Ext4DirEntryInfo, Ext4DxEntry},
+};
 
 /// Result returned by hash tree lookups.
 #[derive(Debug)]

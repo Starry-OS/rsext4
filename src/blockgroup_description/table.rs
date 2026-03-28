@@ -1,8 +1,7 @@
 //! Block group descriptor table views.
 
-use crate::bmalloc::BGIndex;
-
 use super::desc::Ext4GroupDesc;
+use crate::bmalloc::BGIndex;
 
 /// Immutable view over an on-disk block group descriptor table.
 #[derive(Debug)]

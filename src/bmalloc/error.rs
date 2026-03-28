@@ -1,7 +1,9 @@
 //! Bitmap allocation error mapping helpers.
 
-use crate::bitmap::BitmapError;
-use crate::error::{Errno, Ext4Error};
+use crate::{
+    bitmap::BitmapError,
+    error::{Errno, Ext4Error},
+};
 
 pub(crate) fn map_bitmap_error(err: BitmapError) -> Ext4Error {
     match err {

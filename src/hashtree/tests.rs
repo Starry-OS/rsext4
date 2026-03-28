@@ -1,14 +1,15 @@
 use alloc::vec::Vec;
 use core::cell::Cell;
 
-use crate::blockdev::{BlockDevice, Jbd2Dev};
-use crate::bmalloc::{AbsoluteBN, BlockAllocator, InodeAllocator, InodeNumber};
-use crate::config::DEFAULT_INODE_SIZE;
-use crate::disknode::{Ext4Inode, Ext4Timestamp};
-use crate::error::Ext4Error;
-use crate::ext4::Ext4FileSystem;
-
 use super::*;
+use crate::{
+    blockdev::{BlockDevice, Jbd2Dev},
+    bmalloc::{AbsoluteBN, BlockAllocator, InodeAllocator, InodeNumber},
+    config::DEFAULT_INODE_SIZE,
+    disknode::{Ext4Inode, Ext4Timestamp},
+    error::Ext4Error,
+    ext4::Ext4FileSystem,
+};
 
 struct MockBlockDevice {
     data: Vec<u8>,
@@ -92,8 +93,10 @@ impl BlockDevice for MockBlockDevice {
 }
 
 fn create_test_fs() -> Ext4FileSystem {
-    use crate::cache::{BitmapCache, DataBlockCache, InodeCache};
-    use crate::superblock::Ext4Superblock;
+    use crate::{
+        cache::{BitmapCache, DataBlockCache, InodeCache},
+        superblock::Ext4Superblock,
+    };
 
     let mut superblock = Ext4Superblock::default();
     superblock.s_hash_seed = [0x12345678, 0x87654321, 0xABCDEF00, 0x00FEDCBA];

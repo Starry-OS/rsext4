@@ -1,10 +1,11 @@
 //! Public hash tree entry points.
 
-use crate::blockdev::{BlockDevice, Jbd2Dev};
-use crate::disknode::Ext4Inode;
-use crate::ext4::Ext4FileSystem;
-
 use super::{HashTreeError, HashTreeManager, HashTreeSearchResult};
+use crate::{
+    blockdev::{BlockDevice, Jbd2Dev},
+    disknode::Ext4Inode,
+    ext4::Ext4FileSystem,
+};
 
 /// Creates a hash tree manager configured from the mounted filesystem.
 pub fn create_hash_tree_manager(fs: &Ext4FileSystem) -> HashTreeManager {

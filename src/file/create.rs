@@ -1,5 +1,4 @@
-use super::blocks::build_file_block_mapping;
-use super::*;
+use super::{blocks::build_file_block_mapping, *};
 
 pub fn create_symbol_link<B: BlockDevice>(
     device: &mut Jbd2Dev<B>,
@@ -303,7 +302,8 @@ pub fn mkfile<B: BlockDevice>(
     .is_err()
     {
         error!(
-            "mkfile insert_dir_entry failed path={path} parent_ino={parent_ino_num} child={child} ino={new_file_ino}"
+            "mkfile insert_dir_entry failed path={path} parent_ino={parent_ino_num} child={child} \
+             ino={new_file_ino}"
         );
         return Err(Ext4Error::corrupted());
     }

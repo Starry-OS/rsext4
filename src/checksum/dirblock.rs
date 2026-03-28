@@ -1,11 +1,12 @@
 //! Directory block checksum helpers.
 
-use crate::BLOCK_SIZE;
-use crate::crc32c::{ext4_crc32c_seed_from_superblock, ext4_superblock_has_metadata_csum};
-use crate::entries::Ext4DirEntryTail;
-use crate::superblock::Ext4Superblock;
-
 use super::core::ext4_metadata_csum32;
+use crate::{
+    BLOCK_SIZE,
+    crc32c::{ext4_crc32c_seed_from_superblock, ext4_superblock_has_metadata_csum},
+    entries::Ext4DirEntryTail,
+    superblock::Ext4Superblock,
+};
 
 /// Computes the CRC32C for a generic metadata block payload.
 pub fn ext4_metadata_block_csum32(sb: &Ext4Superblock, data: &[u8]) -> u32 {

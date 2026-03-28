@@ -1,12 +1,15 @@
 //! Inode-local metadata mutation helpers.
 
-use crate::blockdev::{BlockDevice, Jbd2Dev};
-use crate::disknode::{Ext4Inode, Ext4Timestamp};
-use crate::error::{Ext4Error, Ext4Result};
-use crate::ext4::Ext4FileSystem;
-
-use super::time::{get_now, resolve_time_spec};
-use super::{Ext4DtimeUpdate, Ext4InodeMetadataUpdate, Ext4ModeUpdate};
+use super::{
+    Ext4DtimeUpdate, Ext4InodeMetadataUpdate, Ext4ModeUpdate,
+    time::{get_now, resolve_time_spec},
+};
+use crate::{
+    blockdev::{BlockDevice, Jbd2Dev},
+    disknode::{Ext4Inode, Ext4Timestamp},
+    error::{Ext4Error, Ext4Result},
+    ext4::Ext4FileSystem,
+};
 
 impl Ext4FileSystem {
     pub(crate) fn inode_disk_size(&self) -> u16 {

@@ -1,5 +1,7 @@
-use super::delete::{delete_dir, delete_file, remove_inodeentry_from_parentdir};
-use super::*;
+use super::{
+    delete::{delete_dir, delete_file, remove_inodeentry_from_parentdir},
+    *,
+};
 
 /// Renames or replaces a file-system entry.
 pub fn rename<B: BlockDevice>(
@@ -173,7 +175,8 @@ pub fn mv<B: BlockDevice>(
         Some(v) => v,
         None => {
             error!(
-                "mv source entry not found in old parent: old_path={old_path} old_parent={old_parent} old_name={old_name}"
+                "mv source entry not found in old parent: old_path={old_path} \
+                 old_parent={old_parent} old_name={old_name}"
             );
             return Err(Ext4Error::invalid_input());
         }
@@ -226,7 +229,8 @@ pub fn mv<B: BlockDevice>(
     .is_err()
     {
         error!(
-            "mv insert_dir_entry failed: old_path={old_path} new_path={new_path} new_parent={new_parent} new_name={new_name} src_ino={src_ino}"
+            "mv insert_dir_entry failed: old_path={old_path} new_path={new_path} \
+             new_parent={new_parent} new_name={new_name} src_ino={src_ino}"
         );
         return Err(Ext4Error::io());
     }
@@ -235,7 +239,8 @@ pub fn mv<B: BlockDevice>(
     if remove_inodeentry_from_parentdir(fs, block_dev, &old_parent, &old_name).is_err() {
         let _ = remove_inodeentry_from_parentdir(fs, block_dev, &new_parent, &new_name);
         error!(
-            "mv remove old entry failed: old_parent={old_parent} old_name={old_name} (rollback new_parent={new_parent} new_name={new_name})"
+            "mv remove old entry failed: old_parent={old_parent} old_name={old_name} (rollback \
+             new_parent={new_parent} new_name={new_name})"
         );
         return Err(Ext4Error::corrupted());
     }

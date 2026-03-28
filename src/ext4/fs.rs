@@ -87,7 +87,8 @@ impl Ext4FileSystem {
             Some(d) => d,
             None => {
                 warn!(
-                    "inode_num_already_allocted: invalid group_idx {group_idx} for inode {inode_num}"
+                    "inode_num_already_allocted: invalid group_idx {group_idx} for inode \
+                     {inode_num}"
                 );
                 return false;
             }

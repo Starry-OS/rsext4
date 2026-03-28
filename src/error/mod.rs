@@ -3,10 +3,10 @@
 mod context;
 mod errno;
 
+use core::fmt;
+
 pub use context::ErrorContext;
 pub use errno::Errno;
-
-use core::fmt;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Ext4Error {

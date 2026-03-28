@@ -1,10 +1,10 @@
 //! Small utility helpers shared across the filesystem implementation.
 
-use crate::ext4::*;
-use crate::superblock::*;
-use alloc::vec;
-use alloc::vec::*;
+use alloc::{vec, vec::*};
+
 use log::debug;
+
+use crate::{ext4::*, superblock::*};
 
 /// Generates a deterministic UUID-like value as four `u32` words.
 pub fn generate_uuid() -> UUID {

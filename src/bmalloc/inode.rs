@@ -1,6 +1,7 @@
+use log::error;
+
 use super::*;
 use crate::error::{Ext4Error, Ext4Result};
-use log::error;
 
 /// Result of an inode allocation request.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -125,8 +126,9 @@ impl InodeAllocator {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use alloc::vec;
+
+    use super::*;
 
     #[test]
     fn test_inode_allocator() {

@@ -2,7 +2,6 @@
 #[cfg(target_arch = "aarch64")]
 #[allow(dead_code)]
 use crate::crc32c::arm64::*;
-
 use crate::superblock::Ext4Superblock;
 
 const POLY: u32 = 0x82F63B78;

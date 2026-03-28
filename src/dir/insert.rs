@@ -1,19 +1,12 @@
 //! Directory entry insertion helpers.
 
-use crate::blockdev::*;
-use crate::bmalloc::InodeNumber;
-use crate::checksum::update_ext4_dirblock_csum32;
-use crate::config::*;
-use crate::crc32c::ext4_superblock_has_metadata_csum;
-use crate::disknode::*;
-use crate::endian::DiskFormat;
-use crate::entries::*;
-use crate::error::*;
-use crate::ext4::*;
-use crate::extents_tree::*;
-use crate::loopfile::*;
-use crate::metadata::Ext4InodeMetadataUpdate;
 use log::error;
+
+use crate::{
+    blockdev::*, bmalloc::InodeNumber, checksum::update_ext4_dirblock_csum32, config::*,
+    crc32c::ext4_superblock_has_metadata_csum, disknode::*, endian::DiskFormat, entries::*,
+    error::*, ext4::*, extents_tree::*, loopfile::*, metadata::Ext4InodeMetadataUpdate,
+};
 
 /// Inserts a child entry into a parent directory, extending the directory if needed.
 ///
@@ -61,7 +54,8 @@ pub fn insert_dir_entry<B: BlockDevice>(
             Some(&b) => b,
             None => {
                 error!(
-                    "insert_dir_entry: missing extent mapping for parent_ino={parent_ino_num} lbn={lbn} name={child_name:?}"
+                    "insert_dir_entry: missing extent mapping for parent_ino={parent_ino_num} \
+                     lbn={lbn} name={child_name:?}"
                 );
                 return Err(Ext4Error::corrupted());
             }

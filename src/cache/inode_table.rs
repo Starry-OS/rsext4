@@ -1,13 +1,15 @@
 //! Inode table cache helpers.
 
-use crate::blockdev::*;
-use crate::bmalloc::{AbsoluteBN, BGIndex, InodeNumber};
-use crate::config::*;
-use crate::disknode::*;
-use crate::endian::*;
-use crate::error::*;
-use alloc::collections::BTreeMap;
-use alloc::vec::Vec;
+use alloc::{collections::BTreeMap, vec::Vec};
+
+use crate::{
+    blockdev::*,
+    bmalloc::{AbsoluteBN, BGIndex, InodeNumber},
+    config::*,
+    disknode::*,
+    endian::*,
+    error::*,
+};
 
 /// Cache key for one global inode number.
 pub type InodeCacheKey = InodeNumber;
@@ -314,7 +316,7 @@ impl InodeCache {
 
         let mut idx = 0usize;
         while idx < dirty_inodes.len() {
-            let (block_num, _, _) = dirty_inodes[idx];
+            let (block_num, ..) = dirty_inodes[idx];
 
             block_dev.read_block(block_num)?;
             {

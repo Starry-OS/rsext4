@@ -5,9 +5,11 @@
 
 use std::cell::Cell;
 
-use rsext4::bmalloc::AbsoluteBN;
-use rsext4::error::{Ext4Error, Ext4Result};
-use rsext4::*;
+use rsext4::{
+    bmalloc::AbsoluteBN,
+    error::{Ext4Error, Ext4Result},
+    *,
+};
 
 /// In-memory block device used by API tests.
 struct MockBlockDevice {

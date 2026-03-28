@@ -5,11 +5,13 @@
 
 use std::cell::Cell;
 
-use rsext4::bmalloc::AbsoluteBN;
-use rsext4::disknode::Ext4Inode;
-use rsext4::error::{Ext4Error, Ext4Result};
-use rsext4::superblock::Ext4Superblock;
-use rsext4::*;
+use rsext4::{
+    bmalloc::AbsoluteBN,
+    disknode::Ext4Inode,
+    error::{Ext4Error, Ext4Result},
+    superblock::Ext4Superblock,
+    *,
+};
 
 const INODE_SIZE: u16 = DEFAULT_INODE_SIZE as u16;
 

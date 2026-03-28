@@ -1,11 +1,9 @@
 //! Core JBD2 on-disk and in-memory data structures.
 
-use crate::bmalloc::AbsoluteBN;
-use crate::config::*;
-use crate::endian::*;
-use alloc::boxed::Box;
-use alloc::vec::Vec;
+use alloc::{boxed::Box, vec::Vec};
 use core::convert::TryInto;
+
+use crate::{bmalloc::AbsoluteBN, config::*, endian::*};
 pub const JOURNAL_FILE_INODE: u64 = 8;
 /// ext4 reserves inode 8 for the journal file.
 pub const JBD2_MAGIC: u32 = 0xC03B_3998u32; // jbd2 magic number (on-disk big-endian)
@@ -19,10 +17,10 @@ pub struct Jbd2Update(pub AbsoluteBN, pub Box<[u8; BLOCK_SIZE]>);
 #[repr(C)]
 pub struct JBD2DEVSYSTEM {
     pub jbd2_super_block: JournalSuperBllockS,
-    pub start_block: AbsoluteBN,       // Physical block containing the journal superblock.
-    pub max_len: u32,                  // Total number of blocks in the journal area.
-    pub head: u32,                     // Commit cursor as a relative log block.
-    pub sequence: u32,                 // Next expected transaction sequence ID.
+    pub start_block: AbsoluteBN, // Physical block containing the journal superblock.
+    pub max_len: u32,            // Total number of blocks in the journal area.
+    pub head: u32,               // Commit cursor as a relative log block.
+    pub sequence: u32,           // Next expected transaction sequence ID.
     pub commit_queue: Vec<Jbd2Update>, // Pending updates in the current transaction.
 }
 
@@ -238,9 +236,9 @@ pub struct JournalBlockTagS {
     // Basic (v1/v2) tag layout
     pub t_blocknr: u32,  // __be32: lower 32-bits of target block number
     pub t_checksum: u16, // __be16: checksum (lower 16 bits)
-    pub t_flags: u16,    // __be16: flags (escaped, same UUID, last tag, ...)
-                         // Optionally followed by __be32 t_blocknr_high (when 64-bit support)
-                         // and optionally a 16-byte uuid, depending on flags/features.
+    pub t_flags: u16,    /* __be16: flags (escaped, same UUID, last tag, ...)
+                          * Optionally followed by __be32 t_blocknr_high (when 64-bit support)
+                          * and optionally a 16-byte uuid, depending on flags/features. */
 }
 
 impl DiskFormat for JournalBlockTagS {
@@ -269,8 +267,8 @@ pub struct JouranlBlockTag3S {
     pub t_blocknr: u32,      // __be32: lower 32 bits
     pub t_flags: u32,        // __be32: flags (includes LAST flag, SAME_UUID, ESCAPED)
     pub t_blocknr_high: u32, // __be32: upper 32 bits when 64-bit support present
-    pub t_checksum: u32,     // __be32: full checksum
-                             // Optionally followed by a uuid (16 bytes) unless SAME_UUID flag set.
+    pub t_checksum: u32,     /* __be32: full checksum
+                              * Optionally followed by a uuid (16 bytes) unless SAME_UUID flag set. */
 }
 
 impl DiskFormat for JouranlBlockTag3S {
@@ -317,8 +315,8 @@ impl DiskFormat for Jbd2JournalBlockTail {
 #[derive(Debug, Clone, Copy)]
 pub struct Jbd2JournalRevokeHeadS {
     pub r_header: JournalHeaderS, // common header
-    pub r_count: u32,             // __be32: number of bytes used in this block
-                                  // Followed by an array of block numbers (4 or 8 bytes each depending on 64-bit support)
+    pub r_count: u32,             /* __be32: number of bytes used in this block
+                                   * Followed by an array of block numbers (4 or 8 bytes each depending on 64-bit support) */
 }
 
 impl DiskFormat for Jbd2JournalRevokeHeadS {
@@ -366,8 +364,9 @@ pub struct CommitHeader {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use DiskFormat;
+
+    use super::*;
 
     #[test]
     fn test_journal_header_roundtrip() {

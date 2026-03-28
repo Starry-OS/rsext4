@@ -1,28 +1,26 @@
 //! Core filesystem state, mount, allocation, and mkfs helpers.
 
-use ::alloc::collections::VecDeque;
-use ::alloc::vec::Vec;
-use log::trace;
-use log::{debug, error, info, warn};
+use ::alloc::{collections::VecDeque, vec::Vec};
+use log::{debug, error, info, trace, warn};
 
-use crate::bitmap::InodeBitmap;
-use crate::blockdev::*;
-use crate::blockgroup_description::*;
-use crate::bmalloc::*;
-use crate::cache::bitmap::CacheKey;
-use crate::cache::*;
-use crate::checksum::*;
-use crate::config::*;
-use crate::crc32c::ext4_superblock_has_metadata_csum;
-use crate::dir::*;
-use crate::disknode::*;
-use crate::endian::*;
-use crate::error::*;
-use crate::jbd2::jbd2::*;
-use crate::jbd2::jbdstruct::*;
-use crate::loopfile::*;
-use crate::superblock::*;
-use crate::tool::*;
+use crate::{
+    bitmap::InodeBitmap,
+    blockdev::*,
+    blockgroup_description::*,
+    bmalloc::*,
+    cache::{bitmap::CacheKey, *},
+    checksum::*,
+    config::*,
+    crc32c::ext4_superblock_has_metadata_csum,
+    dir::*,
+    disknode::*,
+    endian::*,
+    error::*,
+    jbd2::{jbd2::*, jbdstruct::*},
+    loopfile::*,
+    superblock::*,
+    tool::*,
+};
 
 mod alloc;
 mod fs;

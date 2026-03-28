@@ -429,7 +429,7 @@ pub fn delete_file<B: BlockDevice>(
     block_dev: &mut Jbd2Dev<B>,
     path: &str,
 ) -> Ext4Result<()> {
-    //find inode
+    // find inode
     let norm_path = split_paren_child_and_tranlatevalid(path);
     let target = match get_file_inode(fs, block_dev, &norm_path) {
         Ok(Some((ino_num, inode))) => (ino_num, inode),

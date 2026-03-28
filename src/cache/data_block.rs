@@ -1,11 +1,8 @@
 //! Data block cache helpers.
 
-use crate::blockdev::*;
-use crate::bmalloc::AbsoluteBN;
-use crate::config::*;
-use crate::error::*;
-use alloc::collections::BTreeMap;
-use alloc::vec::Vec;
+use alloc::{collections::BTreeMap, vec::Vec};
+
+use crate::{blockdev::*, bmalloc::AbsoluteBN, config::*, error::*};
 /// Cache key for one physical data block.
 pub type BlockCacheKey = AbsoluteBN;
 

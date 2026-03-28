@@ -1,8 +1,10 @@
 //! Superblock checksum helpers.
 
-use crate::crc32c::{crc32c_append, crc32c_init, ext4_superblock_has_metadata_csum};
-use crate::endian::DiskFormat;
-use crate::superblock::Ext4Superblock;
+use crate::{
+    crc32c::{crc32c_append, crc32c_init, ext4_superblock_has_metadata_csum},
+    endian::DiskFormat,
+    superblock::Ext4Superblock,
+};
 
 /// Computes the `metadata_csum` checksum stored in `s_checksum`.
 pub fn ext4_superblock_csum32(sb: &Ext4Superblock) -> u32 {

@@ -1,7 +1,6 @@
 //! Hash tree inode convenience helpers.
 
-use crate::disknode::Ext4Inode;
-use crate::entries::htree_dir;
+use crate::{disknode::Ext4Inode, entries::htree_dir};
 
 /// Extends `Ext4Inode` with hash tree convenience checks.
 pub trait Ext4InodeHashTreeExt {

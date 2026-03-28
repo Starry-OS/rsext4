@@ -1,8 +1,10 @@
 //! Shared metadata timestamp helpers.
 
-use crate::blockdev::{BlockDevice, Jbd2Dev};
-use crate::disknode::{Ext4TimeSpec, Ext4Timestamp};
-use crate::error::Ext4Result;
+use crate::{
+    blockdev::{BlockDevice, Jbd2Dev},
+    disknode::{Ext4TimeSpec, Ext4Timestamp},
+    error::Ext4Result,
+};
 
 pub(crate) fn get_now<B: BlockDevice>(
     device: &Jbd2Dev<B>,

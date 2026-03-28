@@ -1,11 +1,9 @@
 //! Directory path lookup helpers.
 
-use crate::blockdev::*;
-use crate::bmalloc::InodeNumber;
-use crate::disknode::*;
-use crate::error::*;
-use crate::ext4::Ext4FileSystem;
-use crate::loopfile::get_file_inode;
+use crate::{
+    blockdev::*, bmalloc::InodeNumber, disknode::*, error::*, ext4::Ext4FileSystem,
+    loopfile::get_file_inode,
+};
 
 /// Resolves a path to its inode number and inode contents.
 pub fn get_inode_with_num<B: BlockDevice>(

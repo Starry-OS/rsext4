@@ -1,20 +1,21 @@
 //! Path walking and inode block-resolution helpers.
 
-use alloc::collections::BTreeMap;
-use alloc::vec::Vec;
-use log::{error, info};
+use alloc::{collections::BTreeMap, vec::Vec};
 
-use crate::blockdev::*;
-use crate::bmalloc::{AbsoluteBN, InodeNumber};
-use crate::checksum::verify_ext4_dirblock_checksum;
-use crate::config::*;
-use crate::disknode::*;
-use crate::entries::*;
-use crate::error::*;
-use crate::ext4::*;
-use crate::extents_tree::*;
-use crate::hashtree::*;
-use log::debug;
+use log::{debug, error, info};
+
+use crate::{
+    blockdev::*,
+    bmalloc::{AbsoluteBN, InodeNumber},
+    checksum::verify_ext4_dirblock_checksum,
+    config::*,
+    disknode::*,
+    entries::*,
+    error::*,
+    ext4::*,
+    extents_tree::*,
+    hashtree::*,
+};
 
 /// Resolves a logical block number to an absolute physical block number.
 pub fn resolve_inode_block<B: BlockDevice>(

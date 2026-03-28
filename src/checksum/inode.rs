@@ -1,12 +1,10 @@
 //! Inode checksum helpers.
 
-use crate::bmalloc::InodeNumber;
-use crate::crc32c::ext4_crc32c_seed_from_superblock;
-use crate::disknode::Ext4Inode;
-use crate::endian::DiskFormat;
-use crate::superblock::Ext4Superblock;
-
 use super::core::ext4_metadata_csum32;
+use crate::{
+    bmalloc::InodeNumber, crc32c::ext4_crc32c_seed_from_superblock, disknode::Ext4Inode,
+    endian::DiskFormat, superblock::Ext4Superblock,
+};
 
 /// Computes the full 32-bit inode checksum.
 pub fn ext4_inode_csum32(

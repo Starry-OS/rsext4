@@ -1,8 +1,6 @@
 //! JBD2 journal checksum helpers.
 
-use crate::crc32c::crc32c;
-use crate::endian::DiskFormat;
-use crate::jbd2::jbdstruct::JournalSuperBllockS;
+use crate::{crc32c::crc32c, endian::DiskFormat, jbd2::jbdstruct::JournalSuperBllockS};
 
 /// Computes the checksum stored in the JBD2 journal superblock.
 pub fn jbd2_superblock_csum32(jsb: &JournalSuperBllockS) -> u32 {

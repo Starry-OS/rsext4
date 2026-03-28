@@ -1,10 +1,12 @@
 //! Geometry and validation helpers for the ext4 superblock.
 
 use super::Ext4Superblock;
-use crate::checksum::{ext4_superblock_csum32, ext4_update_superblock_checksum};
-use crate::config::*;
-use crate::crc32c::ext4_superblock_has_metadata_csum;
-use crate::error::*;
+use crate::{
+    checksum::{ext4_superblock_csum32, ext4_update_superblock_checksum},
+    config::*,
+    crc32c::ext4_superblock_has_metadata_csum,
+    error::*,
+};
 
 impl Ext4Superblock {
     /// Returns whether the superblock magic is valid.

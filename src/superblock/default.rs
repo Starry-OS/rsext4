@@ -1,8 +1,7 @@
 //! Default superblock initialization.
 
 use super::Ext4Superblock;
-use crate::config::*;
-use crate::jbd2::jbdstruct::*;
+use crate::{config::*, jbd2::jbdstruct::*};
 
 impl Default for Ext4Superblock {
     fn default() -> Self {
